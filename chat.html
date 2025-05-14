@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>شات واتسابي</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background-color: #f2f2f2;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: scroll;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .sent {
+      background-color: #25d366;
+      color: white;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .received {
+      background-color: #ece5dd;
+      color: black;
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    .input-container {
+      display: flex;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #25d366;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+
+    <div class="input-container">
+      <input type="text" id="messageInput" placeholder="اكتب رسالتك...">
+      <button onclick="sendMessage()">إرسال</button>
+    </div>
+  </div>
+
+  <script>
+    // بيانات Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpUU0UTGAD_6T1S_kECThvCf0edKVtuxY",
+      authDomain: "girls-dress-up.firebaseapp.com",
+      databaseURL: "https://girls-dress-up-default-rtdb.firebaseio.com",
+      projectId: "girls-dress-up",
+      storageBucket: "girls-dress-up.firebasestorage.app",
+      messagingSenderId: "1079086890224",
+      appId: "1:1079086890224:web:1cb2563d64f7e9d2175635"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // رقم المستخدم وصديقه (يمكن تغييره من هنا أو باستخدام localStorage)
+    let myCode = localStorage.getItem("myCode");
+    let friendCode = localStorage.getItem("friendCode");
+
+    // إذا ما فيش أكواد محفوظة، اسأل المستخدم
+    if (!myCode || !friendCode) {
+      myCode = prompt("ادخل رقمك:");
+      friendCode = prompt("ادخل رقم صديقك:");
+      localStorage.setItem("myCode", myCode);
+      localStorage.setItem("friendCode", friendCode);
+    }
+
+    // ID الشات
+    const chatId = [myCode, friendCode].sort().join("_");
+
+    const messagesDiv = document.getElementById("messages");
+
+    function sendMessage() {
+      const msg = document.getElementById("messageInput").value;
+      if (msg.trim() === "") return;
+
+      const newMsg = {
+        sender: myCode,
+        text: msg,
+        timestamp: Date.now()
+      };
+
+      db.ref("chats/" + chatId).push(newMsg);
+      document.getElementById("messageInput").value = "";
+    }
+
+    // عرض الرسائل
+    db.ref("chats/" + chatId).on("value", snapshot => {
+      messagesDiv.innerHTML = "";
+      const data = snapshot.val();
+      for (let id in data) {
+        const msg = data[id];
+        const div = document.createElement("div");
+        div.classList.add("message");
+        div.classList.add(msg.sender === myCode ? "sent" : "received");
+        div.textContent = msg.text;
+        messagesDiv.appendChild(div);
+      }
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  </script>
+
+</body>
+</html>
