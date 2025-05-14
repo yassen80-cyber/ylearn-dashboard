@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شات مشابه للواتساب</title>
+  <style>
+    body {
+      background-color: #f2f2f2;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: scroll;
+      display: flex;
+      flex-direction: column; /* جعل الرسائل تظهر تحت بعضها */
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .sent {
+      background-color: #25d366;
+      color: white;
+      text-align: right;
+      margin-left: auto;
+    }
+
+    .received {
+      background-color: #ece5dd;
+      color: black;
+      text-align: left;
+      margin-right: auto;
+    }
+
+    .message.sent img, .message.received img {
+      max-width: 200px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    .message.sent audio, .message.received audio {
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    .input-container {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      background-color: #f2f2f2;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #25d366;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #128c7e;
+    }
+
+    .status {
+      font-size: 12px;
+      color: #999;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="messages" id="messages">
+      <!-- الرسائل ستظهر هنا -->
+    </div>
+
+    <div class="input-container">
+      <input type="text" id="messageInput" placeholder="اكتب رسالتك هنا...">
+      <button onclick="sendMessage()">إرسال</button>
+      <button onclick="chooseImage()">إرسال صورة</button>
+    </div>
+  </div>
+
+  <script>
+    // استرجاع الرقم الخاص بك ورقم صديقك من localStorage
+    let myCode = localStorage.getItem("myCode");
+    let friendCode = localStorage.getItem("friendCode");
+
+    // إنشاء مفتاح المحادثة بين الرقمين
+    let chatKey = [myCode, friendCode].sort().join('-');
+    let messages = JSON.parse(localStorage.getItem("messages_" + chatKey)) || [];
+
+    function displayMessages() {
+      let messageContainer = document.getElementById("messages");
+      messageContainer.innerHTML = ""; // تفريغ الرسائل القديمة
+
+      messages.forEach(msg => {
+        let div = document.createElement("div");
+        div.classList.add("message", msg.sender);
+
+        // إضافة محتوى الرسالة النصية
+        if (msg.text) {
+          div.innerHTML = msg.text;
+        }
+
+        // إضافة الصور
+        if (msg.image) {
+          let img = document.createElement("img");
+          img.src = msg.image;
+          div.appendChild(img);
+        }
+
+        // إضافة الرسائل الصوتية
+        if (msg.audio) {
+          let audio = document.createElement("audio");
+          audio.controls = true;
+          audio.src = msg.audio;
+          div.appendChild(audio);
+        }
+
+        // إضافة حالة الرسالة
+        let statusDiv = document.createElement("div");
+        statusDiv.classList.add("status");
+
+        if (msg.delivered) {
+          statusDiv.textContent = "تم التسليم";
+          statusDiv.style.color = "blue";
+        } else {
+          statusDiv.textContent = "لم يتم التسليم";
+        }
+
+        div.appendChild(statusDiv);
+        messageContainer.appendChild(div);
+      });
+
+      messageContainer.scrollTop = messageContainer.scrollHeight; // للتمرير لأسفل
+    }
+
+    function sendMessage() {
+      let messageText = document.getElementById("messageInput").value;
+      if (messageText) {
+        messages.push({ text: messageText, sender: "sent", delivered: false });
+        localStorage.setItem("messages_" + chatKey, JSON.stringify(messages));
+        displayMessages();
+        document.getElementById("messageInput").value = "";
+      }
+    }
+
+    // إرسال صورة
+    function chooseImage() {
+      let input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = function(event) {
+        let file = event.target.files[0];
+        if (file) {
+          let reader = new FileReader();
+          reader.onload = function(e) {
+            let imageUrl = e.target.result;
+            messages.push({ image: imageUrl, sender: "sent", delivered: false });
+            localStorage.setItem("messages_" + chatKey, JSON.stringify(messages));
+            displayMessages();
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+
+    displayMessages();
+  </script>
+
+</body>
+</html>
