@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>واتساب رنودتي🤩</title>
+<style>
+  body {
+    margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background:#ece5dd;
+  }
+  #app {
+    max-width: 600px;
+    margin: 0 auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    background: #fff;
+  }
+  header {
+    background: #075e54;
+    color: white;
+    padding: 15px;
+    font-size: 20px;
+    text-align: center;
+  }
+  #messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background: #ece5dd;
+  }
+  .message {
+    max-width: 70%;
+    padding: 10px 15px;
+    margin: 5px 10px;
+    border-radius: 20px;
+    clear: both;
+    position: relative;
+    font-size: 16px;
+  }
+  .sent {
+    background: #dcf8c6;
+    float: right;
+    border-bottom-right-radius: 0;
+  }
+  .received {
+    background: white;
+    float: left;
+    border-bottom-left-radius: 0;
+  }
+  footer {
+    padding: 10px;
+    display: flex;
+    border-top: 1px solid #ccc;
+    background: #f0f0f0;
+  }
+  #inputMsg {
+    flex-grow: 1;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 16px;
+    outline: none;
+  }
+  #sendBtn {
+    background: #25d366;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    width: 45px;
+    height: 45px;
+    margin-left: 10px;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #sendBtn:active {
+    background: #128c4a;
+  }
+</style>
+
+<!-- Firebase SDK -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-database.js";
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpUU0UTGAD_6T1S_kECThvCf0edKVtuxY",
+    authDomain: "girls-dress-up.firebaseapp.com",
+    databaseURL: "https://girls-dress-up-default-rtdb.firebaseio.com",
+    projectId: "girls-dress-up",
+    storageBucket: "girls-dress-up.firebasestorage.app",
+    messagingSenderId: "1079086890224",
+    appId: "1:1079086890224:web:b1c10c0f64478f7e175635",
+    measurementId: "G-B5CXMLTZ6B"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const messagesDiv = document.getElementById("messages");
+    const inputMsg = document.getElementById("inputMsg");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // وظيفة لإضافة رسالة على الشاشة
+    function addMessage(text, type) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", type);
+      msgDiv.textContent = text;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // ارسال رسالة الى Firebase
+    function sendMessage(text) {
+      if (!text.trim()) return;
+      const messagesRef = ref(db, "chatMessages");
+      push(messagesRef, {
+        text: text,
+        type: "sent",
+        timestamp: serverTimestamp()
+      });
+    }
+
+    // استماع للرسائل الجديدة من Firebase
+    const messagesRef = ref(db, "chatMessages");
+    onChildAdded(messagesRef, (data) => {
+      const msg = data.val();
+      if (!msg) return;
+      addMessage(msg.text, msg.type);
+    });
+
+    // ارسال عند الضغط على الزر
+    sendBtn.onclick = () => {
+      const text = inputMsg.value.trim();
+      if (text === "") return;
+      sendMessage(text);
+      inputMsg.value = "";
+    };
+
+    // ارسال عند الضغط Enter
+    inputMsg.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendBtn.onclick();
+    });
+  });
+</script>
+
+</head>
+<body>
+
+<div id="app">
+  <header>واتساب رنودتي🤩</header>
+  <div id="messages"></div>
+  <footer>
+    <input id="inputMsg" type="text" placeholder="اكتب رسالة..." autocomplete="off" />
+    <button id="sendBtn">&#9658;</button>
+  </footer>
+</div>
+
+</body>
+</html>
