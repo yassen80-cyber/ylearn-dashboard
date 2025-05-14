@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ألعاب الثعبان والشات</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #eee;
+      text-align: center;
+    }
+
+    h1 {
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px;
+      margin: 0;
+    }
+
+    .game-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .game-btn {
+      width: 45%;
+      margin: 10px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 0 5px #ccc;
+    }
+
+    #game-area, #chat {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 10px;
+    }
+
+    canvas {
+      background-color: black;
+      display: block;
+      margin: 0 auto;
+    }
+
+    #chat {
+      display: none;
+      height: 80vh;
+      overflow-y: auto;
+      background-color: #e5ddd5;
+      padding: 10px;
+    }
+
+    .msg {
+      max-width: 70%;
+      margin: 5px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    .sent {
+      background-color: #dcf8c6;
+      align-self: flex-end;
+      margin-left: auto;
+      text-align: left;
+    }
+
+    .received {
+      background-color: #fff;
+      align-self: flex-start;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    #messageBox {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      max-width: 480px;
+      background: white;
+      display: flex;
+      padding: 5px;
+    }
+
+    #msgInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #sendBtn {
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+    }
+
+    #logout {
+      margin-top: 10px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>ألعاب الثعبان</h1>
+
+<div id="selectCodes" style="padding: 20px;">
+  <p>اختر رقمك ورقم صديقك (من 1 إلى 1000)</p>
+  <input id="myCode" type="number" min="1" max="1000" placeholder="رقمك"><br><br>
+  <input id="friendCode" type="number" min="1" max="1000" placeholder="رقم صديقك"><br><br>
+  <button onclick="start()">ابدأ</button>
+</div>
+
+<div class="game-list" id="gameList"></div>
+
+<div id="game-area"></div>
+
+<div id="chat"></div>
+
+<div id="messageBox" style="display:none;">
+  <input id="msgInput" type="text" placeholder="اكتب رسالة...">
+  <button id="sendBtn">إرسال</button>
+</div>
+
+<button id="logout" onclick="logout()" style="display:none;">تسجيل الخروج</button>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDpUU0UTGAD_6T1S_kECThvCf0edKVtuxY",
+    authDomain: "girls-dress-up.firebaseapp.com",
+    databaseURL: "https://girls-dress-up-default-rtdb.firebaseio.com",
+    projectId: "girls-dress-up",
+    storageBucket: "girls-dress-up.appspot.com",
+    messagingSenderId: "1079086890224",
+    appId: "1:1079086890224:web:1cb2563d64f7e9d2175635"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let myCode = localStorage.getItem("myCode");
+  let friendCode = localStorage.getItem("friendCode");
+  let chatId;
+
+  function start() {
+    myCode = document.getElementById("myCode").value;
+    friendCode = document.getElementById("friendCode").value;
+    if (!myCode || !friendCode || myCode === friendCode) {
+      alert("أدخل أرقام صحيحة ومختلفة");
+      return;
+    }
+    localStorage.setItem("myCode", myCode);
+    localStorage.setItem("friendCode", friendCode);
+    document.getElementById("selectCodes").style.display = "none";
+    loadGames();
+  }
+
+  if (myCode && friendCode && myCode !== friendCode) {
+    document.getElementById("selectCodes").style.display = "none";
+    loadGames();
+  }
+
+  function loadGames() {
+    const gameList = document.getElementById("gameList");
+    for (let i = 1; i <= 15; i++) {
+      const btn = document.createElement("button");
+      btn.className = "game-btn";
+      btn.textContent = "الثعبان " + i;
+      btn.onclick = () => i === 13 ? openChat() : playSnake();
+      gameList.appendChild(btn);
+    }
+  }
+
+  function playSnake() {
+    document.getElementById("chat").style.display = "none";
+    document.getElementById("messageBox").style.display = "none";
+    const canvas = document.createElement("canvas");
+    canvas.width = 300;
+    canvas.height = 300;
+    const ctx = canvas.getContext("2d");
+    document.getElementById("game-area").innerHTML = "";
+    document.getElementById("game-area").appendChild(canvas);
+
+    let snake = [{x: 150, y:150}];
+    let dx = 10, dy = 0;
+    let food = {x: 100, y:100};
+
+    function draw() {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, 300, 300);
+
+      ctx.fillStyle = "lime";
+      snake.forEach(s => ctx.fillRect(s.x, s.y, 10, 10));
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, 10, 10);
+    }
+
+    function move() {
+      const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        food = {
+          x: Math.floor(Math.random() * 30) * 10,
+          y: Math.floor(Math.random() * 30) * 10
+        };
+      } else {
+        snake.pop();
+      }
+
+      if (head.x < 0 || head.x >= 300 || head.y < 0 || head.y >= 300 ||
+          snake.slice(1).some(s => s.x === head.x && s.y === head.y)) {
+        alert("انتهت اللعبة");
+        clearInterval(gameLoop);
+      }
+    }
+
+    document.onkeydown = e => {
+      if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -10; }
+      else if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 10; }
+      else if (e.key === "ArrowLeft" && dx === 0) { dx = -10; dy = 0; }
+      else if (e.key === "ArrowRight" && dx === 0) { dx = 10; dy = 0; }
+    };
+
+    const gameLoop = setInterval(() => {
+      move();
+      draw();
+    }, 150);
+  }
+
+  function openChat() {
+    chatId = myCode < friendCode ? `${myCode}_${friendCode}` : `${friendCode}_${myCode}`;
+    document.getElementById("chat").style.display = "flex";
+    document.getElementById("chat").style.flexDirection = "column";
+    document.getElementById("messageBox").style.display = "flex";
+    document.getElementById("logout").style.display = "block";
+    document.getElementById("game-area").innerHTML = "";
+
+    const chatBox = document.getElementById("chat");
+    chatBox.innerHTML = "";
+
+    const ref = db.ref("chats/" + chatId);
+    ref.off();
+    ref.on("value", snapshot => {
+      chatBox.innerHTML = "";
+      const messages = snapshot.val();
+      for (let key in messages) {
+        const msg = messages[key];
+        const div = document.createElement("div");
+        div.className = "msg " + (msg.sender === myCode ? "sent" : "received");
+        div.innerHTML = msg.text;
+        if (msg.sender !== myCode && !msg.seen) {
+          db.ref("chats/" + chatId + "/" + key + "/seen").set(true);
+        }
+        if (msg.sender === myCode && msg.seen) {
+          div.innerHTML += "<br><small>تم التسليم</small>";
+        }
+        chatBox.appendChild(div);
+      }
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    document.getElementById("sendBtn").onclick = () => {
+      const msg = document.getElementById("msgInput").value;
+      if (msg.trim()) {
+        db.ref("chats/" + chatId).push({
+          text: msg,
+          sender: myCode,
+          seen: false,
+          time: Date.now()
+        });
+        document.getElementById("msgInput").value = "";
+      }
+    };
+  }
+
+  function logout() {
+    localStorage.removeItem("myCode");
+    localStorage.removeItem("friendCode");
+    location.reload();
+  }
+</script>
+
+</body>
+</html>
