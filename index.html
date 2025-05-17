@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل الدخول</title>
+  <style>
+    body {
+      background-color: #111;
+      color: yellow;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    .login-box {
+      background-color: #222;
+      padding: 30px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 0 20px yellow;
+    }
+
+    input {
+      display: block;
+      width: 250px;
+      padding: 10px;
+      margin: 10px auto;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .google-btn {
+      background-color: red;
+      color: white;
+    }
+
+    .login-btn {
+      background-color: yellow;
+      color: black;
+    }
+
+    #success-message {
+      margin-top: 15px;
+      display: none;
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+  <div class="login-box">
+    <h2>تسجيل الدخول</h2>
+    <input type="text" id="name" placeholder="الاسم" />
+    <input type="password" id="password" placeholder="كلمة المرور" />
+    <button class="google-btn" onclick="signInWithGoogle()">تسجيل الدخول باستخدام جوجل</button>
+    <button class="login-btn" onclick="saveData()">تسجيل الدخول</button>
+    <div id="success-message">تم الدخول بنجاح</div>
+  </div>
+
+  <script>
+    // إعدادات Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDO9n4Q9V8QcSKhqZPLqDe3mUyaF2--wQc",
+      authDomain: "girls-7727b.firebaseapp.com",
+      databaseURL: "https://girls-7727b-default-rtdb.firebaseio.com",
+      projectId: "girls-7727b",
+      storageBucket: "girls-7727b.appspot.com",
+      messagingSenderId: "225613522073",
+      appId: "1:225613522073:web:19b45955286851a8920408"
+    };
+
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function saveData() {
+      const name = document.getElementById("name").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (name && password) {
+        const newUserRef = database.ref("users").push();
+        newUserRef.set({
+          name: name,
+          password: password
+        }).then(() => {
+          document.getElementById("success-message").style.display = "block";
+        }).catch(error => {
+          alert("حدث خطأ: " + error.message);
+        });
+      } else {
+        alert("يرجى ملء جميع الحقول");
+      }
+    }
+
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          alert("تم تسجيل الدخول بجوجل: " + result.user.displayName);
+        })
+        .catch((error) => {
+          alert("خطأ: " + error.message);
+        });
+    }
+  </script>
+
+</body>
+</html>
