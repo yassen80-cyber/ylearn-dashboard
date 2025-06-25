@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>سـنتر يس التجاري</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #1e1e1e;
+      color: #eee;
+      padding: 10px;
+      direction: rtl;
+    }
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+    form {
+      background: #2c2c2c;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin: 8px 0 3px;
+      font-size: 14px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      background: #444;
+      color: #eee;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 0;
+      width: 100%;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .delete-btn {
+      background: #e74c3c;
+    }
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+    .whatsapp-btn {
+      background: #25D366;
+      margin-top: 5px;
+    }
+    .whatsapp-btn:hover {
+      background: #1ebe5c;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: none;
+      background: #444;
+      color: #eee;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      margin-top: 15px;
+      border-collapse: collapse;
+      background: #2c2c2c;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 10px 5px;
+      text-align: center;
+      border-bottom: 1px solid #555;
+    }
+    th {
+      background: #4CAF50;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h2>سـنتر يس التجاري</h2>
+  <input type="text" id="searchInput" placeholder="ابحث باسم العميل أو رقم الهاتف...">
+
+  <form id="repairForm">
+    <label>تاريخ الاستلام:</label>
+    <input type="date" id="date" required>
+    <label>اسم العميل:</label>
+    <input type="text" id="customer" required>
+    <label>رقم التليفون:</label>
+    <input type="text" id="phone" required>
+    <label>نوع الجهاز:</label>
+    <select id="deviceType" required>
+      <option value="شاشة">شاشة</option>
+      <option value="ريسيفر">ريسيفر</option>
+      <option value="دش">دش</option>
+    </select>
+    <label>العطل:</label>
+    <input type="text" id="problem" required>
+    <label>ملاحظات (اختياري):</label>
+    <textarea id="notes"></textarea>
+    <button type="submit">إضافة للسجل</button>
+  </form>
+
+  <table id="repairTable">
+    <thead>
+      <tr>
+        <th>تاريخ الاستلام</th>
+        <th>اسم العميل</th>
+        <th>رقم التليفون</th>
+        <th>نوع الجهاز</th>
+        <th>العطل</th>
+        <th>ملاحظات</th>
+        <th>حذف</th>
+        <th>واتساب</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('repairForm');
+    const tableBody = document.querySelector('#repairTable tbody');
+    const searchInput = document.getElementById('searchInput');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const record = {
+        date: document.getElementById('date').value,
+        customer: document.getElementById('customer').value,
+        phone: document.getElementById('phone').value,
+        deviceType: document.getElementById('deviceType').value,
+        problem: document.getElementById('problem').value,
+        notes: document.getElementById('notes').value
+      };
+
+      addRow(record);
+      saveData(record);
+      form.reset();
+    });
+
+    function addRow(record) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.date}</td>
+        <td>${record.customer}</td>
+        <td>${record.phone}</td>
+        <td>${record.deviceType}</td>
+        <td>${record.problem}</td>
+        <td>${record.notes}</td>
+        <td><button class="delete-btn" onclick="deleteRow(this)">حذف</button></td>
+        <td><button class="whatsapp-btn" onclick='sendWhatsApp(${JSON.stringify(record)})'>واتساب</button></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    function sendWhatsApp(record) {
+      const msg = `
+📅 التاريخ: ${record.date}
+👤 العميل: ${record.customer}
+📞 الرقم: ${record.phone}
+🖥️ الجهاز: ${record.deviceType}
+🔧 العطل: ${record.problem}
+📝 ملاحظات: ${record.notes}
+      `;
+      const waLink = "https://wa.me/201221015966?text=" + encodeURIComponent(msg);
+      window.open(waLink, "_blank");
+    }
+
+    function deleteRow(btn) {
+      const row = btn.parentElement.parentElement;
+      const index = Array.from(tableBody.children).indexOf(row);
+      row.remove();
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.splice(index, 1);
+      localStorage.setItem('repairs', JSON.stringify(records));
+    }
+
+    function saveData(record) {
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.push(record);
+      localStorage.setItem('repairs', JSON.stringify(records));
+    }
+
+    function loadData() {
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.forEach(record => addRow(record));
+    }
+
+    searchInput.addEventListener('input', function () {
+      const filter = this.value.trim().toLowerCase();
+      const rows = tableBody.getElementsByTagName('tr');
+
+      if (filter !== '') {
+        form.style.display = 'none';
+      } else {
+        form.style.display = 'block';
+      }
+
+      Array.from(rows).forEach(row => {
+        const customerCell = row.cells[1].textContent.trim().toLowerCase();
+        const phoneCell = row.cells[2].textContent.trim().toLowerCase();
+
+        if (customerCell.startsWith(filter) || phoneCell.startsWith(filter)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
