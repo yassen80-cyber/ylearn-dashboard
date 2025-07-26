@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>سـنتر يس التجاري</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #1e1e1e;
+      color: #eee;
+      padding: 10px;
+      direction: rtl;
+    }
+    h2 {
+      text-align: center;
+      color: #4CAF50;
+      font-size: 26px;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px #000;
+    }
+    form {
+      background: #2c2c2c;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.6);
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin: 8px 0 3px;
+      font-size: 14px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 8px;
+      background: #444;
+      color: #eee;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    input:focus, textarea:focus, select:focus {
+      background: #555;
+      outline: none;
+    }
+    button {
+      padding: 10px 0;
+      width: 100%;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 8px;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    .delete-btn {
+      background: #e74c3c;
+      margin-left: 5px;
+    }
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0 5px;
+      border-radius: 5px;
+      border: none;
+      background: #444;
+      color: #eee;
+      font-size: 14px;
+    }
+    #resultCount {
+      text-align: center;
+      font-size: 13px;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+    #successMessage {
+      display: none;
+      text-align: center;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #2ecc71;
+      color: white;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+      background: #2c2c2c;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 10px 5px;
+      text-align: center;
+      border-bottom: 1px solid #555;
+    }
+    th {
+      background: #4CAF50;
+      color: white;
+    }
+    tr:hover {
+      background: #3a3a3a;
+    }
+  </style>
+</head>
+<body>
+  <h2>سـنتر يس التجاري</h2>
+  <input type="text" id="searchInput" placeholder="ابحث باسم العميل أو رقم الهاتف...">
+  <div id="resultCount"></div>
+  <div id="successMessage">✅ تم إرسال البيانات على واتساب</div>  <form id="repairForm">
+    <label>تاريخ الاستلام:</label>
+    <input type="date" id="date" required>
+    <label>اسم العميل:</label>
+    <input type="text" id="customer" required>
+    <label>رقم التليفون:</label>
+    <input type="text" id="phone" required>
+    <label>نوع الجهاز:</label>
+    <select id="deviceType" required>
+      <option value="شاشة">شاشة</option>
+      <option value="ريسيفر">ريسيفر</option>
+      <option value="دش">دش</option>
+    </select>
+    <label>العطل:</label>
+    <input type="text" id="problem" required>
+    <label>ملاحظات (اختياري):</label>
+    <textarea id="notes"></textarea>
+    <label>مدة الضمان:</label>
+    <select id="warranty" required>
+      <option value="3">3 شهور</option>
+      <option value="6">6 شهور</option>
+      <option value="12">سنة</option>
+    </select>
+    <button type="submit">إضافة للسجل</button>
+  </form>  <table id="repairTable">
+    <thead>
+      <tr>
+        <th>تاريخ الاستلام</th>
+        <th>اسم العميل</th>
+        <th>رقم التليفون</th>
+        <th>نوع الجهاز</th>
+        <th>العطل</th>
+        <th>ملاحظات</th>
+        <th>مدة الضمان</th>
+        <th>نهاية الضمان</th>
+        <th colspan="2">خيارات</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>  <script>
+    const form = document.getElementById('repairForm');
+    const tableBody = document.querySelector('#repairTable tbody');
+    const searchInput = document.getElementById('searchInput');
+    const resultCount = document.getElementById('resultCount');
+    const successMessage = document.getElementById('successMessage');
+
+    function calculateWarrantyEnd(startDate, months) {
+      const date = new Date(startDate);
+      date.setMonth(date.getMonth() + parseInt(months));
+      return date.toISOString().split('T')[0];
+    }
+
+    const defaultSubmit = function(e) {
+      e.preventDefault();
+      const record = {
+        date: document.getElementById('date').value,
+        customer: document.getElementById('customer').value,
+        phone: document.getElementById('phone').value,
+        deviceType: document.getElementById('deviceType').value,
+        problem: document.getElementById('problem').value,
+        notes: document.getElementById('notes').value,
+        warranty: document.getElementById('warranty').value,
+        warrantyEnd: calculateWarrantyEnd(document.getElementById('date').value, document.getElementById('warranty').value)
+      };
+      addRow(record);
+      saveData(record);
+      sendWhatsApp(record);
+      showSuccess();
+      form.reset();
+    };
+
+    form.onsubmit = defaultSubmit;
+
+    function showSuccess() {
+      successMessage.style.display = 'block';
+      setTimeout(() => {
+        successMessage.style.display = 'none';
+      }, 3000);
+    }
+
+    function addRow(record, index = null) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.date}</td>
+        <td>${record.customer}</td>
+        <td>${record.phone}</td>
+        <td>${record.deviceType}</td>
+        <td style="color:${getDeviceColor(record.deviceType)};">${record.problem}</td>
+        <td>${record.notes}</td>
+        <td>${record.warranty} شهر</td>
+        <td>${record.warrantyEnd}</td>
+        <td>
+          <button class="delete-btn" onclick="deleteRow(this)">حذف</button>
+          <button onclick="editRow(this)">تعديل</button>
+        </td>
+      `;
+      if (index !== null) {
+        tableBody.children[index].replaceWith(row);
+      } else {
+        tableBody.appendChild(row);
+      }
+    }
+
+    function getDeviceColor(type) {
+      switch(type) {
+        case 'شاشة': return '#00BCD4';
+        case 'ريسيفر': return '#FF9800';
+        case 'دش': return '#E91E63';
+        default: return '#eee';
+      }
+    }
+
+    function sendWhatsApp(record) {
+      const msg = `📅 التاريخ: ${record.date}\n👤 العميل: ${record.customer}\n📞 الرقم: ${record.phone}\n🖥️ الجهاز: ${record.deviceType}\n🔧 العطل: ${record.problem}\n📝 ملاحظات: ${record.notes}\n📆 الضمان: ${record.warranty} شهر - حتى ${record.warrantyEnd}`;
+      const waLink = "https://wa.me/201221015966?text=" + encodeURIComponent(msg);
+      window.open(waLink, "_blank");
+    }
+
+    function deleteRow(btn) {
+      const row = btn.parentElement.parentElement;
+      const index = Array.from(tableBody.children).indexOf(row);
+      row.remove();
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.splice(index, 1);
+      localStorage.setItem('repairs', JSON.stringify(records));
+      updateSearchResult();
+    }
+
+    function editRow(btn) {
+      const row = btn.parentElement.parentElement;
+      const index = Array.from(tableBody.children).indexOf(row);
+      const cells = row.getElementsByTagName('td');
+
+      document.getElementById('date').value = cells[0].textContent;
+      document.getElementById('customer').value = cells[1].textContent;
+      document.getElementById('phone').value = cells[2].textContent;
+      document.getElementById('deviceType').value = cells[3].textContent;
+      document.getElementById('problem').value = cells[4].textContent;
+      document.getElementById('notes').value = cells[5].textContent;
+      document.getElementById('warranty').value = parseInt(cells[6].textContent);
+
+      form.scrollIntoView({ behavior: 'smooth' });
+
+      form.onsubmit = function(e) {
+        e.preventDefault();
+        const updated = {
+          date: document.getElementById('date').value,
+          customer: document.getElementById('customer').value,
+          phone: document.getElementById('phone').value,
+          deviceType: document.getElementById('deviceType').value,
+          problem: document.getElementById('problem').value,
+          notes: document.getElementById('notes').value,
+          warranty: document.getElementById('warranty').value,
+          warrantyEnd: calculateWarrantyEnd(document.getElementById('date').value, document.getElementById('warranty').value)
+        };
+        let records = JSON.parse(localStorage.getItem('repairs')) || [];
+        records[index] = updated;
+        localStorage.setItem('repairs', JSON.stringify(records));
+        addRow(updated, index);
+        form.reset();
+        form.onsubmit = defaultSubmit;
+      };
+    }
+
+    function saveData(record) {
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.push(record);
+      localStorage.setItem('repairs', JSON.stringify(records));
+    }
+
+    function loadData() {
+      let records = JSON.parse(localStorage.getItem('repairs')) || [];
+      records.forEach(record => addRow(record));
+      updateSearchResult();
+    }
+
+    function updateSearchResult() {
+      const filter = searchInput.value.trim().toLowerCase();
+      const rows = Array.from(tableBody.getElementsByTagName('tr'));
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        const customerCell = row.cells[1].textContent.trim().toLowerCase();
+        const phoneCell = row.cells[2].textContent.trim().toLowerCase();
+
+        if (filter === '' || customerCell.includes(filter) || phoneCell.includes(filter)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      resultCount.textContent = filter
+        ? visibleCount > 0
+          ? `عدد النتائج: ${visibleCount}`
+          : 'لا توجد نتائج مطابقة.'
+        : '';
+    }
+
+    searchInput.addEventListener('input', function () {
+      form.style.display = this.value.trim() ? 'none' : 'block';
+      updateSearchResult();
+    });
+
+    loadData();
+  </script></body>
+</html>
