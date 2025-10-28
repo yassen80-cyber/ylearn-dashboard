@@ -1,0 +1,175 @@
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>لوحة الطالب - YLEARN</title>
+<style>
+  :root{--bg:#0b0f19;--card:#111827;--accent:#00b2ff;--muted:#cbd5e1}
+  body{margin:0;font-family:Cairo, sans-serif;background:var(--bg);color:#fff}
+  header{background:var(--card);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+  header h1{color:var(--accent);margin:0}
+  .main{max-width:1000px;margin:18px auto;padding:12px}
+  .banner{background:linear-gradient(45deg,#00b2ff,#16a34a);padding:12px;border-radius:10px;font-weight:700}
+  .select-box{background:#1e2636;padding:12px;border-radius:10px;margin-top:12px}
+  select{width:100%;padding:10px;border-radius:8px;border:0;background:#0b0f19;color:#fff}
+  .course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:14px}
+  .course-card{background:#1e2636;padding:12px;border-radius:10px;text-align:right}
+  .course-card h3{color:var(--accent);margin:0}
+  .course-card p{color:var(--muted);margin:8px 0}
+  .buy-btn{background:var(--accent);border:0;color:#fff;padding:10px;border-radius:8px;width:100%;cursor:pointer}
+  .view-btn{background:#16a34a;border:0;color:#fff;padding:10px;border-radius:8px;width:100%;cursor:pointer}
+  .footer{margin-top:18px;color:var(--muted);text-align:center;padding:8px}
+  /* modal iframe */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:999}
+  .modal .frame{width:920px;height:700px;background:#fff;border-radius:8px;overflow:hidden}
+  @media(max-width:920px){ .modal .frame{width:95%;height:80%} }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 لوحة الطالب</h1>
+  <button id="logoutBtn" style="background:#e63946;border:0;padding:8px 12px;border-radius:8px;color:#fff">تسجيل الخروج</button>
+</header>
+
+<div class="main">
+  <div class="banner" id="bannerText">مرحبًا بك! اختر المدرس وابدأ رحلة التعلم — لا تتوقف يا صديقي 👊</div>
+
+  <div class="select-box">
+    <label>اختر المدرس:</label>
+    <select id="teacherSelect"><option value="">-- اختر المدرس --</option></select>
+  </div>
+
+  <div id="coursesContainer" class="course-grid"></div>
+
+  <div class="footer">استمر في التعلم <span>يا صديقي</span> — نحن معك كل خطوة 🚀</div>
+</div>
+
+<!-- Modal للـ iframe -->
+<div id="payModal" class="modal">
+  <div class="frame" id="iframeWrap">
+    <!-- iframe سيضاف هنا -->
+  </div>
+</div>
+
+<!-- Firebase & logic -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  // Firebase config (مثل اللي عندك)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.appspot.com",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  const teacherSelect = document.getElementById('teacherSelect');
+  const coursesContainer = document.getElementById('coursesContainer');
+  const bannerText = document.getElementById('bannerText');
+  const payModal = document.getElementById('payModal');
+  const iframeWrap = document.getElementById('iframeWrap');
+  let currentUser = null;
+
+  // تسجيل خروج
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) location.href = 'login.html';
+    currentUser = user;
+    loadTeachers();
+  });
+
+  async function loadTeachers() {
+    const snap = await get(ref(db, 'teachers'));
+    teacherSelect.innerHTML = '<option value="">-- اختر المدرس --</option>';
+    if (snap.exists()) {
+      Object.entries(snap.val()).forEach(([id, t]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = t.name + (t.grade ? ` (${t.grade})` : '');
+        teacherSelect.appendChild(opt);
+      });
+    }
+  }
+
+  teacherSelect.addEventListener('change', async () => {
+    const teacherId = teacherSelect.value;
+    coursesContainer.innerHTML = '';
+    if (!teacherId) return;
+    const coursesSnap = await get(ref(db, 'courses'));
+    if (!coursesSnap.exists()) {
+      coursesContainer.innerHTML = '<div style="grid-column:1/-1;color:#ccc">لا توجد كورسات</div>';
+      return;
+    }
+    const purchasedSnap = await get(ref(db, `students/${currentUser.uid}/purchased`));
+    const purchased = purchasedSnap.exists() ? purchasedSnap.val() : {};
+
+    const filtered = Object.entries(coursesSnap.val()).filter(([id, c]) => c.teacherId === teacherId);
+    filtered.forEach(([id, c]) => {
+      const purchasedFlag = !!purchased[id];
+      const card = document.createElement('div');
+      card.className = 'course-card';
+      card.innerHTML = `
+        <h3>${c.name}</h3>
+        <p>${c.description || 'لا يوجد وصف'}</p>
+        <p>💰 السعر: ${c.price} جنيه</p>
+        <button class="${purchasedFlag ? 'view-btn' : 'buy-btn'}" id="btn-${id}">
+          ${purchasedFlag ? '✅ عرض الكورس' : '🛒 شراء بالفيزا'}
+        </button>
+      `;
+      coursesContainer.appendChild(card);
+
+      document.getElementById(`btn-${id}`).addEventListener('click', async () => {
+        if (purchasedFlag) {
+          // فتح رابط الكورس (لو موجود)
+          if (c.url) window.open(c.url, '_blank');
+          else alert('لا يوجد محتوى متاح بعد.');
+          return;
+        }
+        // يبدأ عملية الدفع: نطلب من السيرفر رابط iframe
+        try {
+          // amount in piasters (EGP * 100)
+          const amount = (Number(c.price) || 0) * 100;
+          const resp = await fetch('/create_payment', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ uid: currentUser.uid, courseId: id, amount })
+          });
+          const data = await resp.json();
+          if (!data.iframeUrl) throw new Error('فشل إنشاء رابط الدفع');
+          openPayModal(data.iframeUrl);
+        } catch (err) {
+          console.error(err);
+          alert('حصل خطأ أثناء بدء الدفع: ' + (err.message || ''));
+        }
+      });
+    });
+  });
+
+  function openPayModal(url) {
+    iframeWrap.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:0;"></iframe>`;
+    payModal.style.display = 'flex';
+    // اغلاق المودال عند النقر بالخارج
+    payModal.addEventListener('click', (e) => {
+      if (e.target === payModal) {
+        payModal.style.display = 'none';
+        iframeWrap.innerHTML = '';
+      }
+    }, { once: true });
+  }
+</script>
+</body>
+</html>

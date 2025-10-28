@@ -1,0 +1,52 @@
+<!-- pay_success.html -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>تم الدفع - YLEARN</title>
+<style>
+  body{font-family:Cairo, sans-serif;background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+  .card{background:#111827;padding:20px;border-radius:10px;text-align:center;max-width:420px}
+  .ok{color:#16a34a;font-weight:700;margin-bottom:8px}
+  a{color:#00b2ff;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="status">جاري التحقق من الدفع... رجاءً انتظر</div>
+</div>
+
+<script>
+(async function(){
+  // Paymob will redirect to: pay_success.html?uid=...&courseId=...&orderId=...
+  const params = new URLSearchParams(window.location.search);
+  const uid = params.get('uid');
+  const courseId = params.get('courseId');
+  const orderId = params.get('orderId');
+
+  if(!uid || !courseId || !orderId){
+    document.getElementById('status').textContent = 'خطأ: بيانات ناقصة للمعالجة.';
+    return;
+  }
+
+  try {
+    const resp = await fetch('/verify_payment', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ uid, courseId, orderId })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      document.getElementById('status').innerHTML = '<div class="ok">✅ تم الدفع وتفعيل الكورس بنجاح!</div><div><a href="dashboard.html">الرجوع للوحة الكورسات</a></div>';
+    } else {
+      document.getElementById('status').textContent = 'فشل التحقق من الدفع. تواصل مع الدعم.';
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById('status').textContent = 'حدث خطأ أثناء التحقق.';
+  }
+})();
+</script>
+</body>
+</html>
