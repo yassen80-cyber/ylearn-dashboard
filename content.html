@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📘 إدارة محتوى الكورسات - منصة YLEARN</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Cairo", sans-serif;
+    background: #0b0f19;
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #111827;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+
+  header h1 {
+    color: #00b2ff;
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button.back {
+    background: #00b2ff;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+  }
+
+  button:hover { opacity: 0.9; }
+
+  .content {
+    padding: 1rem;
+    max-width: 900px;
+    margin: auto;
+  }
+
+  h2 {
+    color: #00b2ff;
+    margin-top: 1.5rem;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 0.8rem;
+    margin: 0.5rem 0;
+    border: none;
+    border-radius: 8px;
+    background: #1e2636;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  textarea { resize: vertical; min-height: 70px; }
+
+  .add-btn {
+    background: #00b2ff;
+    color: #fff;
+    padding: 0.8rem;
+    width: 100%;
+    font-size: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+
+  .content-card {
+    background: #1e2636;
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+
+  .content-card h3 { color: #00b2ff; margin-top: 0; }
+  .content-card p { color: #ccc; margin: 6px 0; }
+
+  .delete-btn {
+    background: #e63946;
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.1rem; }
+    .content { padding: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>📘 إدارة محتوى الكورسات</h1>
+    <button class="back">رجوع للوحة الأدمن</button>
+  </header>
+
+  <div class="content">
+    <h2>🎓 اختر الكورس</h2>
+    <select id="courseSelect"><option value="">-- اختر كورس --</option></select>
+
+    <h2>➕ إضافة محتوى جديد</h2>
+    <input type="text" id="contentTitle" placeholder="عنوان المحتوى (مثلاً: الدرس الأول)">
+    <textarea id="contentNote" placeholder="ملاحظات أو وصف مختصر"></textarea>
+    <input type="text" id="videoLink" placeholder="رابط فيديو (YouTube أو Google Drive)">
+    <button id="addContentBtn" class="add-btn">إضافة المحتوى</button>
+
+    <h2>📄 المحتوى الحالي</h2>
+    <div id="contentContainer"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged,
+      setPersistence,
+      browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { 
+      getDatabase, 
+      ref, 
+      get, 
+      push, 
+      set, 
+      remove 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    // 🔧 إعدادات Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+      authDomain: "ylearn-fe1fa.firebaseapp.com",
+      databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+      projectId: "ylearn-fe1fa",
+      storageBucket: "ylearn-fe1fa.firebasestorage.app",
+      messagingSenderId: "1092852055944",
+      appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // 🧩 حفظ الجلسة في المتصفح
+    await setPersistence(auth, browserLocalPersistence);
+
+    const courseSelect = document.getElementById("courseSelect");
+    const contentContainer = document.getElementById("contentContainer");
+    let selectedCourseId = null;
+
+    // ✅ تحميل الكورسات من قاعدة البيانات
+    async function loadCourses() {
+      const snap = await get(ref(db, "courses"));
+      courseSelect.innerHTML = '<option value="">-- اختر كورس --</option>';
+      if (snap.exists()) {
+        Object.entries(snap.val()).forEach(([id, c]) => {
+          const opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = c.name;
+          courseSelect.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.textContent = "❌ لا توجد كورسات";
+        courseSelect.appendChild(opt);
+      }
+    }
+
+    // 📚 عند اختيار كورس
+    courseSelect.addEventListener("change", () => {
+      selectedCourseId = courseSelect.value;
+      loadContent();
+    });
+
+    // 📄 تحميل المحتوى الخاص بالكورس
+    async function loadContent() {
+      contentContainer.innerHTML = "";
+      if (!selectedCourseId) return;
+      const snap = await get(ref(db, `courses/${selectedCourseId}/content`));
+      if (!snap.exists()) {
+        contentContainer.innerHTML = "<p>❌ لا يوجد محتوى بعد.</p>";
+        return;
+      }
+
+      Object.entries(snap.val()).forEach(([id, item]) => {
+        const div = document.createElement("div");
+        div.className = "content-card";
+        div.innerHTML = `
+          <h3>${item.title}</h3>
+          <p>${item.note}</p>
+          ${item.video ? `<p>🎥 <a href="${item.video}" target="_blank" style="color:#00b2ff;">مشاهدة الفيديو</a></p>` : ""}
+          <button class="delete-btn" data-id="${id}">🗑️ حذف</button>
+        `;
+        div.querySelector(".delete-btn").addEventListener("click", () => deleteContent(id));
+        contentContainer.appendChild(div);
+      });
+    }
+
+    // 🗑️ حذف محتوى معين
+    async function deleteContent(id) {
+      if (!confirm("هل تريد حذف هذا المحتوى؟")) return;
+      await remove(ref(db, `courses/${selectedCourseId}/content/${id}`));
+      alert("🗑️ تم الحذف بنجاح");
+      loadContent();
+    }
+
+    // ➕ إضافة محتوى جديد
+    document.getElementById("addContentBtn").addEventListener("click", async () => {
+      if (!selectedCourseId) return alert("اختر الكورس أولاً");
+      const title = document.getElementById("contentTitle").value.trim();
+      const note = document.getElementById("contentNote").value.trim();
+      const video = document.getElementById("videoLink").value.trim();
+      if (!title) return alert("أدخل عنوان المحتوى");
+
+      const refContent = push(ref(db, `courses/${selectedCourseId}/content`));
+      await set(refContent, { title, note, video, createdAt: Date.now() });
+
+      alert("✅ تم إضافة المحتوى بنجاح!");
+      document.getElementById("contentTitle").value = "";
+      document.getElementById("contentNote").value = "";
+      document.getElementById("videoLink").value = "";
+      loadContent();
+    });
+
+    // 👤 التحقق من تسجيل الدخول
+    onAuthStateChanged(auth, (user) => {
+      if (!user) return (window.location.href = "login.html");
+      loadCourses();
+    });
+
+    // 🔙 الرجوع للوحة الأدمن
+    document.querySelector(".back").addEventListener("click", () => {
+      window.location.href = "admin.html";
+    });
+  </script>
+</body>
+</html>
