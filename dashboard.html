@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🎓 لوحة الطالب - YLEARN</title>
+<style>
+  :root {
+    --bg:#0b0f19; --card:#111827; --accent:#00b2ff; --ok:#00b258; --muted:#cbd5e1;
+  }
+  body {
+    margin: 0; font-family: "Cairo", sans-serif; background: var(--bg); color: #fff;
+  }
+  header {
+    background: var(--card); padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header h1 { color: var(--accent); margin: 0; }
+  .main { max-width: 1000px; margin: 18px auto; padding: 12px; }
+  .banner {
+    background: linear-gradient(45deg,#00b2ff,#16a34a);
+    padding: 12px; border-radius: 10px; font-weight: 700;
+  }
+  .select-box {
+    background:#1e2636; padding:12px; border-radius:10px; margin-top:12px;
+  }
+  select {
+    width:100%; padding:10px; border-radius:8px; border:0;
+    background:#0b0f19; color:#fff;
+  }
+  .course-grid {
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:12px; margin-top:14px;
+  }
+  .course-card {
+    background:#1e2636; padding:12px; border-radius:10px; text-align:right;
+  }
+  .course-card h3 { color:var(--accent); margin:0; }
+  .course-card p { color:var(--muted); margin:8px 0; }
+  .buy-btn, .view-btn {
+    border:0; color:#fff; padding:10px; border-radius:8px;
+    width:100%; cursor:pointer; font-weight:600;
+  }
+  .buy-btn { background:var(--accent); }
+  .view-btn { background:var(--ok); }
+  #logoutBtn {
+    background:linear-gradient(45deg,#e63946,#b91c1c);
+    border:none;color:#fff;padding:10px 16px;border-radius:10px;
+    font-weight:600;cursor:pointer;transition:all 0.25s ease-in-out;
+  }
+  #logoutBtn:hover {
+    transform:scale(1.07);
+    background:linear-gradient(45deg,#ef4444,#991b1b);
+    box-shadow:0 4px 15px rgba(239,68,68,0.5);
+  }
+
+  /* نافذة الشراء */
+  .modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    display:none; align-items:center; justify-content:center;
+  }
+  .modal-box {
+    background:var(--card); border-radius:14px; padding:20px;
+    max-width:400px; width:90%; text-align:center;
+  }
+  .modal-box h3 { color:var(--accent); margin-bottom:10px; }
+  .modal-box p { color:var(--muted); line-height:1.6; font-size:15px; }
+  .modal-box input {
+    width:90%; padding:8px; border-radius:8px; border:none; margin:10px 0;
+    background:#0b0f19; color:#fff; text-align:center;
+  }
+  .modal-box button {
+    background:var(--ok); border:none; padding:10px 16px;
+    border-radius:8px; color:#fff; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 لوحة الطالب</h1>
+  <button id="logoutBtn">🔒 تسجيل الخروج</button>
+</header>
+
+<div class="main">
+  <div class="banner" id="bannerText">مرحبًا بك! اختر المدرس وابدأ رحلة التعلم 🚀</div>
+  <div class="select-box">
+    <label>اختر المدرس:</label>
+    <select id="teacherSelect"><option value="">-- اختر المدرس --</option></select>
+  </div>
+  <div id="coursesContainer" class="course-grid"></div>
+</div>
+
+<!-- نافذة الشراء -->
+<div id="buyModal" class="modal">
+  <div class="modal-box">
+    <h3>💳 إتمام شراء الكورس</h3>
+    <p id="coursePriceText"></p>
+    <p>طرق التحويل:</p>
+    <p>📱 إنستا باي: <b>01274060642</b> (هدى محمد)</p>
+    <p>💳 فيزا: <b>5484 4602 5334 6969</b> (هدى محمد)</p>
+    <p>📸 بعد التحويل، أرسل سكرين شوت على رقم واتساب:
+      <b>01221015966</b> لاستلام كود التفعيل.</p>
+    <hr style="border:1px solid #333;margin:10px 0;">
+    <label>أدخل كود التفعيل:</label>
+    <input type="text" id="activationCode" placeholder="أدخل الكود هنا">
+    <button id="activateBtn">✅ تفعيل الكورس</button><br><br>
+    <button onclick="closeBuyModal()" style="background:#e63946;">إغلاق</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getDatabase, ref, get, set, onValue, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.appspot.com",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  const teacherSelect = document.getElementById('teacherSelect');
+  const coursesContainer = document.getElementById('coursesContainer');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const banner = document.getElementById('bannerText');
+
+  const buyModal = document.getElementById('buyModal');
+  const coursePriceText = document.getElementById('coursePriceText');
+  const activationInput = document.getElementById('activationCode');
+  const activateBtn = document.getElementById('activateBtn');
+
+  let currentCourse = null;
+  let currentUserId = null;
+
+  logoutBtn.onclick = async () => {
+    await signOut(auth);
+    alert("✅ تم تسجيل الخروج بنجاح");
+    window.location.href = "login.html";
+  };
+
+  window.closeBuyModal = () => buyModal.style.display = "none";
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return window.location.href = "login.html";
+    currentUserId = user.uid;
+
+    const studentSnap = await get(ref(db, `students/${user.uid}`));
+    const studentData = studentSnap.exists() ? studentSnap.val() : {};
+    const studentName = studentData.name || "طالبنا العزيز";
+    banner.textContent = `مرحبًا ${studentName}! اختر المدرس وابدأ رحلتك 🚀`;
+
+    // تحميل المدرسين
+    const teachersSnap = await get(ref(db, "teachers"));
+    teacherSelect.innerHTML = '<option value="">-- اختر المدرس --</option>';
+    if (teachersSnap.exists()) {
+      Object.entries(teachersSnap.val()).forEach(([id, t]) => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = t.name;
+        teacherSelect.appendChild(opt);
+      });
+    }
+
+    teacherSelect.addEventListener("change", async () => {
+      const teacherId = teacherSelect.value;
+      coursesContainer.innerHTML = '';
+      if (!teacherId) return;
+
+      const coursesSnap = await get(ref(db, "courses"));
+      if (!coursesSnap.exists()) return;
+      const allCourses = coursesSnap.val();
+
+      const purchasedSnap = await get(ref(db, `students/${user.uid}/purchased`));
+      const purchased = purchasedSnap.exists() ? purchasedSnap.val() : {};
+
+      Object.entries(allCourses).forEach(([courseId, c]) => {
+        if (c.teacherId === teacherId) {
+          const card = document.createElement("div");
+          card.className = "course-card";
+          const isPurchased = purchased[courseId] === true;
+          card.innerHTML = `
+            <h3>${c.name}</h3>
+            <p>${c.description || "لا يوجد وصف"}</p>
+            <p>💰 السعر: ${c.price} جنيه</p>
+            <button id="btn-${courseId}" class="${isPurchased ? "view-btn" : "buy-btn"}">
+              ${isPurchased ? "✅ عرض الكورس" : "🛒 اشترِ الكورس"}
+            </button>
+          `;
+          coursesContainer.appendChild(card);
+
+          const btn = document.getElementById(`btn-${courseId}`);
+          if (isPurchased) {
+            btn.onclick = () => {
+              if (c.url) window.open(c.url, "_blank");
+              else alert("لا يوجد محتوى بعد.");
+            };
+          } else {
+            btn.onclick = async () => {
+              currentCourse = { id: courseId, name: c.name, price: c.price };
+              coursePriceText.textContent = `سعر الكورس: ${c.price} جنيه مصري`;
+              buyModal.style.display = "flex";
+
+              // إرسال الطلب لقاعدة البيانات
+              await set(ref(db, `unlockRequests/${user.uid}_${courseId}`), {
+                studentName,
+                studentId: user.uid,
+                studentPhone: studentData.phone || "غير مسجل",
+                parentPhone: studentData.guardianPhone || "غير مسجل",
+                courseName: c.name,
+                courseId,
+                price: c.price,
+                status: "pending",
+                timestamp: new Date().toISOString()
+              });
+            };
+          }
+        }
+      });
+    });
+  });
+
+  // تفعيل الكورس بالكود
+  activateBtn.onclick = async () => {
+    const code = activationInput.value.trim();
+    if (!code) return alert("⚠️ أدخل كود التفعيل أولاً");
+
+    const codeSnap = await get(ref(db, `activationCodes/${code}`));
+    if (!codeSnap.exists()) return alert("❌ الكود غير صحيح");
+    const data = codeSnap.val();
+
+    if (data.status === "used") return alert("❌ تم استخدام هذا الكود من قبل");
+
+    if (data.studentId !== currentUserId) return alert("❌ هذا الكود لا يخص حسابك");
+
+    // تفعيل الكورس
+    await update(ref(db, `students/${currentUserId}/purchased/${data.courseId}`), true);
+    await update(ref(db, `activationCodes/${code}`), { status: "used" });
+
+    alert(`✅ تم تفعيل الكورس "${data.courseName}" بنجاح!`);
+    buyModal.style.display = "none";
+  };
+</script>
+</body>
+</html>
