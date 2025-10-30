@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة تحكم الأدمن | YLEARN</title>
+<style>
+:root {
+  --bg:#0b0f19; --card:#111827; --accent:#00b2ff;
+  --ok:#00b258; --danger:#e63946; --muted:#ccc;
+}
+body {
+  background:var(--bg); color:#fff; font-family:"Cairo",sans-serif;
+  margin:0; padding:2rem;
+}
+h1{text-align:center;color:var(--accent);}
+.dashboard{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:1.5rem;margin-top:2rem;
+}
+.card{
+  background:var(--card);border-radius:15px;padding:2rem;text-align:center;
+  transition:0.3s;cursor:pointer;
+}
+.card:hover{transform:scale(1.05);background:#131c2a;}
+.card h2{color:var(--accent);}
+.card p{color:var(--muted);}
+#notifBtn{
+  position:fixed;top:20px;left:20px;background:var(--accent);
+  border:none;border-radius:50%;width:50px;height:50px;
+  color:#fff;font-size:22px;cursor:pointer;
+}
+#notifBtn span{
+  position:absolute;top:-5px;right:-5px;background:#e63946;
+  border-radius:50%;font-size:12px;padding:3px 6px;
+}
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:none;align-items:center;justify-content:center;
+}
+.modal .box{
+  background:var(--card);border-radius:12px;
+  padding:1.5rem;width:90%;max-width:600px;
+}
+.tabs {
+  display:flex;justify-content:center;margin-bottom:1rem;
+}
+.tabs button {
+  background:#1e2636;color:#fff;border:none;padding:10px 18px;
+  cursor:pointer;border-radius:8px;margin:0 5px;
+  transition:0.3s;font-weight:bold;
+}
+.tabs button.active {
+  background:var(--accent);color:#000;
+}
+.tab-content {display:none;}
+.tab-content.active {display:block;}
+.req{
+  background:#1e2636;border-radius:10px;padding:10px;margin:10px 0;
+}
+.req p{margin:6px 0;color:var(--muted);}
+.clear-btn {
+  background:var(--danger);
+  color:#fff;border:none;padding:8px 12px;border-radius:8px;
+  font-weight:bold;cursor:pointer;margin-top:10px;
+}
+.clear-btn:hover{background:#c11e2e;}
+</style>
+</head>
+<body>
+<button id="notifBtn">🔔<span id="notifCount" style="display:none;">0</span></button>
+<h1>👨‍💻 لوحة تحكم الأدمن</h1>
+
+<div class="dashboard">
+  <div class="card" onclick="window.location.href='teachers.html'">
+    <h2>👨‍🏫 المدرسين</h2><p>إدارة المدرسين</p>
+  </div>
+  <div class="card" onclick="window.location.href='courses.html'">
+    <h2>📚 الكورسات</h2><p>إضافة أو حذف كورسات</p>
+  </div>
+  <div class="card" onclick="window.location.href='content.html'">
+    <h2>📖 المحتوى</h2><p>رفع الدروس والمواد</p>
+  </div>
+</div>
+
+<button class="btn-logout" id="logoutBtn">🔒 تسجيل الخروج</button>
+
+<style>
+.btn-logout {
+  display:block;margin:2rem auto;padding:12px 26px;
+  font-family:"Cairo",sans-serif;font-size:1.05rem;font-weight:600;
+  color:#fff;background:linear-gradient(45deg,#e63946,#b91c1c);
+  border:none;border-radius:12px;cursor:pointer;
+  box-shadow:0 4px 15px rgba(230,57,70,0.4);
+  transition:all 0.25s ease-in-out;
+}
+.btn-logout:hover{
+  transform:scale(1.07);
+  background:linear-gradient(45deg,#ef4444,#991b1b);
+  box-shadow:0 6px 20px rgba(239,68,68,0.5);
+}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.appspot.com",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    alert("✅ تم تسجيل الخروج بنجاح");
+    window.location.href = "login.html";
+  } catch (error) {
+    alert("حدث خطأ أثناء تسجيل الخروج: " + error.message);
+  }
+});
+</script>
+
+<div id="notifModal" class="modal">
+  <div class="box">
+    <div class="tabs">
+      <button id="tab-requests" class="active">📩 الطلبات</button>
+      <button id="tab-reviews">⭐ التقييمات</button>
+    </div>
+    <div id="requestsTab" class="tab-content active">
+      <div id="requestsList"></div>
+      <button class="clear-btn" id="clearNotif">🗑️ مسح كل الطلبات</button>
+    </div>
+    <div id="reviewsTab" class="tab-content">
+      <div id="reviewsList"></div>
+      <button class="clear-btn" id="clearReviews">🗑️ مسح كل التقييمات</button>
+    </div>
+    <button onclick="closeModal()" style="background:#555;padding:8px 14px;border:none;border-radius:8px;color:#fff;margin-top:8px;">إغلاق</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.appspot.com",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const notifBtn = document.getElementById('notifBtn');
+const notifModal = document.getElementById('notifModal');
+const notifCount = document.getElementById('notifCount');
+const requestsList = document.getElementById('requestsList');
+const reviewsList = document.getElementById('reviewsList');
+const clearBtn = document.getElementById('clearNotif');
+const clearReviews = document.getElementById('clearReviews');
+
+// Tabs switching
+const tabReq = document.getElementById('tab-requests');
+const tabRev = document.getElementById('tab-reviews');
+const reqTab = document.getElementById('requestsTab');
+const revTab = document.getElementById('reviewsTab');
+tabReq.addEventListener('click',()=>{
+  tabReq.classList.add('active');tabRev.classList.remove('active');
+  reqTab.classList.add('active');revTab.classList.remove('active');
+});
+tabRev.addEventListener('click',()=>{
+  tabRev.classList.add('active');tabReq.classList.remove('active');
+  revTab.classList.add('active');reqTab.classList.remove('active');
+});
+
+notifBtn.addEventListener('click', () => notifModal.style.display = 'flex');
+window.closeModal = () => notifModal.style.display = 'none';
+
+// مسح الطلبات
+clearBtn.addEventListener('click', async () => {
+  if (confirm("هل أنت متأكد من مسح كل الطلبات؟")) {
+    await remove(ref(db, 'unlockRequests'));
+    requestsList.innerHTML = '<p>تم مسح جميع الطلبات ✅</p>';
+    notifCount.style.display = 'none';
+  }
+});
+
+// مسح التقييمات
+clearReviews.addEventListener('click', async () => {
+  if (confirm("هل أنت متأكد من مسح كل التقييمات؟")) {
+    await remove(ref(db, 'reviews'));
+    reviewsList.innerHTML = '<p>تم مسح جميع التقييمات ✅</p>';
+  }
+});
+
+// الأكواد
+function generateCode(len = 8) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from({length:len},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+onValue(ref(db, 'unlockRequests'), async (snap) => {
+  requestsList.innerHTML = '';
+  if (!snap.exists()) {
+    requestsList.innerHTML = '<p>لا توجد طلبات حالياً.</p>';
+    notifCount.style.display = 'none';
+    return;
+  }
+
+  const all = snap.val();
+  let count = 0;
+  for (const [reqId, req] of Object.entries(all)) {
+    const userSnap = await get(ref(db, `users/${req.studentId}`));
+    const student = userSnap.exists() ? userSnap.val() : {};
+    const codePath = `activationCodes/${req.studentId}_${req.courseId}`;
+    const codeSnap = await get(ref(db, codePath));
+    let codeData;
+    if (!codeSnap.exists()) {
+      const newCode = generateCode(8);
+      codeData = {
+        code: newCode,
+        studentName: student.fullName || 'غير معروف',
+        studentNumber: student.studentNumber || 'غير معروف',
+        courseName: req.courseName,
+        status: 'unused',
+        date: new Date(req.timestamp).toLocaleString('ar-EG')
+      };
+      await set(ref(db, codePath), codeData);
+    } else {
+      codeData = codeSnap.val();
+    }
+    count++;
+    const div = document.createElement('div');
+    div.className = 'req';
+    div.innerHTML = `
+      <p>👤 الاسم: ${codeData.studentName}</p>
+      <p>📞 رقم الطالب: ${codeData.studentNumber}</p>
+      <p>📘 الكورس: ${codeData.courseName}</p>
+      <p>📅 ${codeData.date}</p>
+      <p>🔑 <b>كود التفعيل:</b> <span style="color:#00b2ff">${codeData.code}</span></p>
+    `;
+    requestsList.appendChild(div);
+  }
+
+  notifCount.style.display = count > 0 ? 'inline' : 'none';
+  notifCount.textContent = count;
+});
+
+// التقييمات
+onValue(ref(db, 'notifications/feedbacks'), (snap) => {
+  reviewsList.innerHTML = '';
+  if (!snap.exists()) {
+    reviewsList.innerHTML = '<p>لا توجد تقييمات حالياً.</p>';
+    return;
+  }
+  for (const [id, r] of Object.entries(snap.val())) {
+    const div = document.createElement('div');
+    div.className = 'req';
+    div.innerHTML = `
+      <p>⭐ التقييم: ${r.rating || '-'}</p>
+      <p>💬 التعليق: ${r.message || 'لا يوجد'}</p>
+    `;
+    reviewsList.appendChild(div);
+  }
+});
+</script>
+</body>
+</html>
