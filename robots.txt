@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yassen80-cyber.github.io/ylearn-dashboard/sitemap.xml
