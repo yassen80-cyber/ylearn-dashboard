@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إنشاء حساب - منصة THE GIANT</title>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #fff;
+      font-family: "Cairo", sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .register-box {
+      background-color: #111827;
+      padding: 2rem;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    }
+
+    h2 {
+      text-align: center;
+      color: #00b2ff;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #1e2636;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      left: 10px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #aaa;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    .toggle-password:hover {
+      color: #00b2ff;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.8rem;
+      background: #00b2ff;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0090cc;
+    }
+
+    p {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    a {
+      color: #00b2ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-box">
+    <h2>إنشاء حساب جديد</h2>
+    <form id="registerForm">
+      <label>الاسم الكامل</label>
+      <input type="text" id="fullName" placeholder="أدخل اسمك الكامل" required />
+
+      <label>رقم الطالب</label>
+      <input type="number" id="studentNumber" placeholder="أدخل رقم الطالب" required />
+
+      <label>رقم ولي الأمر</label>
+      <input type="number" id="parentNumber" placeholder="أدخل رقم ولي الأمر" required />
+
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="email" placeholder="example@email.com" required />
+
+      <label>كلمة المرور</label>
+      <div class="password-container">
+        <input type="password" id="password" placeholder="********" required />
+        <span id="togglePassword" class="toggle-password">👁️</span>
+      </div>
+
+      <label>تأكيد كلمة المرور</label>
+      <div class="password-container">
+        <input type="password" id="confirmPassword" placeholder="********" required />
+        <span id="toggleConfirmPassword" class="toggle-password">👁️</span>
+      </div>
+
+      <label>اختر الصف الدراسي</label>
+      <select id="grade" required>
+        <option value="">-- اختر الصف --</option>
+        <option value="1prim">الصف الأول الابتدائي</option>
+        <option value="2prim">الصف الثاني الابتدائي</option>
+        <option value="3prim">الصف الثالث الابتدائي</option>
+        <option value="4prim">الصف الرابع الابتدائي</option>
+        <option value="5prim">الصف الخامس الابتدائي</option>
+        <option value="6prim">الصف السادس الابتدائي</option>
+        <option value="1prep">الصف الأول الإعدادي</option>
+        <option value="2prep">الصف الثاني الإعدادي</option>
+        <option value="3prep">الصف الثالث الإعدادي</option>
+        <option value="1sec">الصف الأول الثانوي</option>
+        <option value="2sec">الصف الثاني الثانوي</option>
+        <option value="3sec">الصف الثالث الثانوي</option>
+      </select>
+
+      <button type="submit">إنشاء الحساب</button>
+    </form>
+    <p>هل لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a></p>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+      authDomain: "ylearn-fe1fa.firebaseapp.com",
+      databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+      projectId: "ylearn-fe1fa",
+      storageBucket: "ylearn-fe1fa.firebasestorage.app",
+      messagingSenderId: "1092852055944",
+      appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d",
+      measurementId: "G-J61VZ5M5FN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    const registerForm = document.getElementById("registerForm");
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullName = document.getElementById("fullName").value;
+      const studentNumber = document.getElementById("studentNumber").value;
+      const parentNumber = document.getElementById("parentNumber").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const grade = document.getElementById("grade").value;
+
+      if (password !== confirmPassword) {
+        alert("كلمتا المرور غير متطابقتين");
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await set(ref(database, 'users/' + user.uid), {
+          fullName,
+          studentNumber,
+          parentNumber,
+          email,
+          grade,
+          courses: {}
+        });
+
+        alert("تم إنشاء الحساب بنجاح!");
+        window.location.href = "login.html";
+      } catch (error) {
+        alert("حدث خطأ: " + error.message);
+      }
+    });
+
+    // 👁️ التحكم في إظهار / إخفاء كلمة المرور
+    const togglePassword = document.getElementById("togglePassword");
+    const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
+    const passwordField = document.getElementById("password");
+    const confirmPasswordField = document.getElementById("confirmPassword");
+
+    togglePassword.addEventListener("click", () => {
+      const type = passwordField.type === "password" ? "text" : "password";
+      passwordField.type = type;
+      togglePassword.textContent = type === "password" ? "👁️" : "🙈";
+    });
+
+    toggleConfirmPassword.addEventListener("click", () => {
+      const type = confirmPasswordField.type === "password" ? "text" : "password";
+      confirmPasswordField.type = type;
+      toggleConfirmPassword.textContent = type === "password" ? "👁️" : "🙈";
+    });
+  </script>
+</body>
+</html>
