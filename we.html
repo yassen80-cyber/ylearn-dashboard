@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>من نحن - THE GIANT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+        font-family: 'Cairo', sans-serif;
+        background-color: #0b0f19;
+        color: #fff;
+        direction: rtl;
+        overflow-x: hidden;
+        animation: fadeIn 1s ease-in-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      header {
+        background-color: #0b0f19;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        transition: background 0.4s;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .logo img {
+        width: 40px;
+        animation: floatLogo 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 5px #00b2ff);
+      }
+
+      @keyframes floatLogo {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+      }
+
+      .logo h1 {
+        font-size: 1.4rem;
+        color: #008cff;
+        margin: 0;
+        font-weight: 800;
+        text-shadow: 0 0 10px #00b2ff;
+        animation: glowText 2s ease-in-out infinite alternate;
+      }
+
+      @keyframes glowText {
+        from { text-shadow: 0 0 10px #00b2ff, 0 0 20px #0077ff; }
+        to { text-shadow: 0 0 20px #00ffff, 0 0 40px #00b2ff; }
+      }
+
+      .logo span {
+        color: #fff;
+      }
+
+      .menu-icon {
+        font-size: 1.8rem;
+        cursor: pointer;
+        color: #fff;
+        transition: transform 0.3s ease, color 0.3s;
+      }
+
+      .menu-icon.open {
+        transform: rotate(90deg);
+        color: #00b2ff;
+      }
+
+      .menu {
+        position: fixed;
+        top: 0;
+        right: -280px;
+        background-color: #111827;
+        width: 260px;
+        height: 100%;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 5rem;
+        transition: right 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        z-index: 999;
+        border-left: 2px solid #00b2ff;
+      }
+
+      .menu.active {
+        right: 0;
+      }
+
+      .menu a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.1rem;
+        margin: 1rem 0;
+        background-color: #00b2ff;
+        padding: 0.7rem 1.5rem;
+        border-radius: 8px;
+        transition: all 0.3s;
+        width: 80%;
+        text-align: center;
+      }
+
+      .menu a:hover {
+        background-color: #008bcc;
+        transform: scale(1.05);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .toggle-theme {
+        background: #1e2636;
+        border: none;
+        border-radius: 25px;
+        width: 55px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 6px;
+        cursor: pointer;
+      }
+
+      .toggle-theme span {
+        font-size: 1.1rem;
+        color: #ccc;
+      }
+
+      main {
+        text-align: center;
+        padding: 3rem 1.5rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+        color: #00b2ff;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 15px #00b2ff;
+      }
+
+      p {
+        font-size: 1.2rem;
+        color: #ccc;
+        margin-bottom: 2rem;
+        line-height: 1.8;
+      }
+
+      .section {
+        margin-bottom: 3rem;
+      }
+
+      .mission, .vision, .values {
+        background: #111827;
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 1rem auto;
+        max-width: 700px;
+        box-shadow: 0 0 15px rgba(0,178,255,0.2);
+        transition: transform 0.3s;
+      }
+
+      .mission:hover, .vision:hover, .values:hover {
+        transform: scale(1.03);
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        color: #ccc;
+      }
+
+      ul li {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+      }
+
+      ul li::before {
+        content: "✔️ ";
+      }
+
+      .contact-btn {
+        background-color: #00b2ff;
+        color: #fff;
+        padding: 0.8rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.3s;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .contact-btn:hover {
+        background-color: #008bcc;
+        transform: scale(1.05);
+      }
+
+      footer {
+        background-color: #0b0f19;
+        color: #999;
+        text-align: center;
+        padding: 1.5rem;
+        font-size: 0.9rem;
+        margin-top: 3rem;
+      }
+
+      footer strong {
+        display: block;
+        color: #00b2ff;
+        margin-top: 0.5rem;
+        font-weight: 700;
+      }
+
+      body.light {
+        background-color: #f5f5f5;
+        color: #111;
+      }
+
+      body.light header { background-color: #fff; }
+      body.light .menu { background-color: #fff; }
+      body.light .mission, body.light .vision, body.light .values { background: #fff; }
+      body.light .logo span { color: #000; }
+
+      @media (max-width: 768px) {
+        h2 { font-size: 1.6rem; }
+        p { font-size: 1rem; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="menu-icon" id="menuToggle">☰</div>
+      <div class="logo">
+        <img src="logo.png" alt="Logo">
+        <h1><span>منصة</span> THE GIANT</h1>
+      </div>
+      <div class="actions">
+        <button class="toggle-theme" id="themeToggle">
+          <span>🌞</span>
+          <span>🌜</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="menu" id="sideMenu">
+      <a href="index.html">الرئيسية</a>
+      <a href="login.html">تسجيل الدخول</a>
+      <a href="register.html">إنشاء حساب</a>
+      <a href="we.html">من نحن</a>
+    </div>
+
+    <main>
+      <section class="section">
+        <h2>من نحن</h2>
+        <p>منصةTHE GIANT هي منصة تعليمية ذكية تهدف إلى تطوير طريقة التعلم للطلاب باستخدام التكنولوجيا الحديثة.</p>
+      </section>
+
+      <section class="mission">
+        <h2>🎯 رسالتنا</h2>
+        <p>نحن في THE GIANT نسعى لتوفير بيئة تعليمية تفاعلية تجمع بين المتعة والفائدة، من خلال تقديم محتوى شامل ومميز لجميع المراحل الدراسية.</p>
+      </section>
+
+      <section class="vision">
+        <h2>👁️ رؤيتنا</h2>
+        <p>أن نصبح المنصة التعليمية الأولى في الوطن العربي، من خلال تمكين الطلاب بالمهارات والمعرفة التي يحتاجونها للمستقبل.</p>
+      </section>
+
+      <section class="values">
+        <h2>💎 قيمنا</h2>
+        <ul>
+          <li>الجودة والاحترافية في تقديم المحتوى.</li>
+          <li>التعاون بين الطلاب والمعلمين.</li>
+          <li>الابتكار والتطوير المستمر.</li>
+          <li>الشغف بالتعليم وتحقيق التفوق.</li>
+        </ul>
+      </section>
+
+      <a href="tawasal.html" class="contact-btn">تواصل معنا</a>
+    </main>
+
+    <footer>
+      &copy; 2025 THE GIANT. جميع الحقوق محفوظة.
+      <strong>صُنعت المنصة لتحسين ورفع مستوى الطالب</strong>
+    </footer>
+
+    <script>
+      const menuToggle = document.getElementById('menuToggle');
+      const sideMenu = document.getElementById('sideMenu');
+      const themeToggle = document.getElementById('themeToggle');
+
+      menuToggle.addEventListener('click', () => {
+        sideMenu.classList.toggle('active');
+        menuToggle.classList.toggle('open');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!sideMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+          sideMenu.classList.remove('active');
+          menuToggle.classList.remove('open');
+        }
+      });
+
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+      });
+    </script>
+  </body>
+</html>

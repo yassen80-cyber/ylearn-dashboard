@@ -1,0 +1,252 @@
+ <!DOCTYPE html>
+
+<html lang="ar" dir="rtl">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  
+  <title>تقييم المنصة - THE GIANT</title>    <!-- Firebase -->    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>    <style>  
+    body {  
+      margin: 0;  
+      font-family: "Cairo", sans-serif;  
+      background: radial-gradient(circle at top left, #0a0e1a, #05070e 70%);  
+      color: #fff;  
+      text-align: center;  
+      overflow-x: hidden;  
+    }  
+  
+    header {  
+      background: linear-gradient(90deg, #00b2ff, #0077ff);  
+      padding: 25px;  
+      font-size: 1.9rem;  
+      font-weight: 700;  
+      box-shadow: 0 0 25px rgba(0,178,255,0.35);  
+    }  
+  
+    .container {  
+      max-width: 700px;  
+      margin: 60px auto;  
+      background: rgba(255, 255, 255, 0.05);  
+      border-radius: 20px;  
+      padding: 40px;  
+      box-shadow: 0 0 30px rgba(0,178,255,0.15);  
+      animation: fadeIn 1.5s ease-out;  
+    }  
+  
+    h2 {  
+      color: #00b2ff;  
+      font-size: 1.8rem;  
+      margin-bottom: 25px;  
+    }  
+  
+    .stars {  
+      display: flex;  
+      justify-content: center;  
+      gap: 10px;  
+      margin-bottom: 25px;  
+    }  
+  
+    .stars span {  
+      font-size: 2.8rem;  
+      cursor: pointer;  
+      color: #666;  
+      transition: all 0.3s ease;  
+      user-select: none;  
+    }  
+  
+    .stars span.active,  
+    .stars span:hover,  
+    .stars span.hovered {  
+      color: #ffcc00;  
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);  
+      transform: scale(1.15);  
+    }  
+  
+    textarea {  
+      width: 100%;  
+      height: 120px;  
+      border-radius: 10px;  
+      border: none;  
+      resize: none;  
+      font-family: "Cairo", sans-serif;  
+      font-size: 1rem;  
+      padding: 15px;  
+      background: rgba(255, 255, 255, 0.1);  
+      color: #fff;  
+      outline: none;  
+      margin-bottom: 25px;  
+    }  
+  
+    textarea::placeholder {  
+      color: #bbb;  
+    }  
+  
+    button {  
+      background: linear-gradient(135deg, #0098ff, #0069ff);  
+      border: none;  
+      color: white;  
+      font-size: 1.1rem;  
+      padding: 14px 40px;  
+      border-radius: 14px;  
+      cursor: pointer;  
+      transition: 0.3s;  
+      box-shadow: 0 0 20px rgba(0,178,255,0.2);  
+      margin: 10px;  
+    }  
+  
+    button:hover {  
+      transform: translateY(-5px);  
+      box-shadow: 0 0 25px rgba(0,178,255,0.5);  
+    }  
+  
+    .msg {  
+      margin-top: 20px;  
+      font-size: 1.1rem;  
+      color: #00b2ff;  
+      display: none;  
+    }  
+  
+    /* 🎯 تنسيق نافذة التنبيه المخصصة */  
+    #customAlert {  
+      display: none;  
+      position: fixed;  
+      top: 50%;  
+      left: 50%;  
+      transform: translate(-50%, -50%);  
+      background: #111827;  
+      color: #fff;  
+      padding: 25px 30px;  
+      border-radius: 16px;  
+      box-shadow: 0 0 20px rgba(0,178,255,0.4);  
+      text-align: center;  
+      z-index: 9999;  
+      animation: fadeIn 0.4s ease;  
+      width: 85%;  
+      max-width: 360px;  
+    }  
+  
+    #customAlert h3 {  
+      color: #00b2ff;  
+      margin-bottom: 12px;  
+    }  
+  
+    #customAlert button {  
+      margin-top: 10px;  
+      background: #00b2ff;  
+      border: none;  
+      color: white;  
+      padding: 10px 30px;  
+      border-radius: 10px;  
+      cursor: pointer;  
+      font-size: 1rem;  
+    }  
+  
+    @keyframes fadeIn {  
+      from { opacity: 0; transform: translateY(20px); }  
+      to { opacity: 1; transform: translateY(0); }  
+    }  
+  </style>  </head>  
+<body>  
+  <header>تقييم منصة THE GIANT</header>    <div class="container">  
+    <h2>شاركنا رأيك يا صديقي ❤️</h2>  <div class="stars" id="starContainer">  
+  <span data-value="1">★</span>  
+  <span data-value="2">★</span>  
+  <span data-value="3">★</span>  
+  <span data-value="4">★</span>  
+  <span data-value="5">★</span>  
+</div>  
+
+<textarea id="feedbackText" placeholder="اكتب رأيك هنا..."></textarea>  
+
+<button id="submitBtn">إرسال التقييم</button>  
+<button id="homeBtn">🏠 الرجوع للرئيسية</button>  
+
+<div class="msg" id="msgBox">✅ تم إرسال تقييمك بنجاح! شكراً لك 🌟</div>
+
+  </div>    <!-- 🎯 نافذة التنبيه المخصصة -->    <div id="customAlert">  
+    <h3>THE GIANT says 💬</h3>  
+    <p id="alertMessage"></p>  
+    <button onclick="closeAlert()">تمام</button>  
+  </div>    <script>  
+    // 🔹 دالة التنبيه المخصصة  
+    function showAlert(msg) {  
+      document.getElementById("alertMessage").textContent = msg;  
+      document.getElementById("customAlert").style.display = "block";  
+    }  
+  
+    function closeAlert() {  
+      document.getElementById("customAlert").style.display = "none";  
+    }  
+  
+    // 🔹 إعداد Firebase  
+    const firebaseConfig = {  
+      apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",  
+      authDomain: "ylearn-fe1fa.firebaseapp.com",  
+      databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",  
+      projectId: "ylearn-fe1fa",  
+      storageBucket: "ylearn-fe1fa.firebasestorage.app",  
+      messagingSenderId: "1092852055944",  
+      appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d",  
+      measurementId: "G-J61VZ5M5FN"  
+    };  
+  
+    firebase.initializeApp(firebaseConfig);  
+    const db = firebase.database();  
+  
+    // 🔹 التحكم في النجوم  
+    const stars = document.querySelectorAll(".stars span");  
+    let rating = 0;  
+  
+    stars.forEach((star, index) => {  
+      star.addEventListener("mouseover", () => {  
+        stars.forEach((s, i) => s.classList.toggle("hovered", i <= index));  
+      });  
+      star.addEventListener("mouseout", () => {  
+        stars.forEach(s => s.classList.remove("hovered"));  
+      });  
+      star.addEventListener("click", () => {  
+        rating = index + 1;  
+        stars.forEach((s, i) => s.classList.toggle("active", i < rating));  
+      });  
+    });  
+  
+    // 🔹 إرسال التقييم  
+    const submitBtn = document.getElementById("submitBtn");  
+    const msgBox = document.getElementById("msgBox");  
+  
+    submitBtn.addEventListener("click", () => {  
+      const text = document.getElementById("feedbackText").value.trim();  
+  
+      if (rating === 0) {  
+        showAlert("من فضلك اختر عدد النجوم أولاً ⭐");  
+        return;  
+      }  
+      if (text === "") {  
+        showAlert("من فضلك اكتب رأيك قبل الإرسال ✍️");  
+        return;  
+      }  
+  
+      const feedbackRef = firebase.database().ref("/notifications/feedbacks").push();  
+      feedbackRef.set({  
+        rating: rating,  
+        message: text,  
+        timestamp: new Date().toISOString()  
+      })  
+      .then(() => {  
+        msgBox.style.display = "block";  
+        document.getElementById("feedbackText").value = "";  
+        stars.forEach(s => s.classList.remove("active"));  
+        rating = 0;  
+        setTimeout(() => msgBox.style.display = "none", 4000);  
+      })  
+      .catch(err => {  
+        showAlert("حدث خطأ أثناء الإرسال 😢");  
+        console.error(err);  
+      });  
+    });  
+  
+    // 🔹 الرجوع إلى الصفحة الرئيسية  
+    document.getElementById("homeBtn").addEventListener("click", () => {  
+      window.location.href = "index.html";  
+    });  
+  </script>  </body>  
+</html>
