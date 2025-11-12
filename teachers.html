@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إدارة المدرسين | THE GIANT</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #111827;
+      --muted: #ccc;
+      --accent: #00b2ff;
+      --ok: #00b258;
+      --danger: #e63946;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Cairo", sans-serif;
+      background: var(--bg);
+      color: #fff;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 700px;
+      margin: 0 auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.4);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #1e2636;
+      color: #fff;
+      margin-top: 5px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .btn-add {
+      background: var(--ok);
+      color: #fff;
+      margin-top: 15px;
+      width: 100%;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      margin-top: 10px;
+    }
+
+    .teacher {
+      background: #151a23;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .teacher .info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    #backBtn {
+      background: var(--accent);
+      color: #000;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      border: none;
+      position: fixed;
+      top: 15px;
+      left: 15px;
+    }
+
+    #searchInput {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #1e2636;
+      color: #fff;
+    }
+
+    /* 🎯 نافذة التنبيه المخصصة */
+    #customAlert {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111827;
+      color: #fff;
+      padding: 25px 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,178,255,0.4);
+      text-align: center;
+      z-index: 9999;
+      animation: fadeIn 0.4s ease;
+      width: 85%;
+      max-width: 360px;
+    }
+
+    #customAlert h3 {
+      color: #00b2ff;
+      margin-bottom: 12px;
+    }
+
+    #customAlert button {
+      margin-top: 10px;
+      background: #00b2ff;
+      border: none;
+      color: white;
+      padding: 10px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .card {
+        padding: 15px;
+      }
+      h1 {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="backBtn">⬅️ رجوع</button>
+  <h1>إدارة المدرسين</h1>
+
+  <div class="card">
+    <label>🔍 بحث عن مستر</label>
+    <input id="searchInput" placeholder="اكتب اسم المستر للبحث">
+
+    <label>👨‍🏫 اسم المستر</label>
+    <input id="t_name" placeholder="أدخل اسم المستر" />
+
+    <label>📘 التخصص</label>
+    <input id="t_subject" placeholder="مثال: رياضيات، لغة عربية..." />
+
+    <label>🧑‍💼 اسم السكرتيرة</label>
+    <input id="t_secretary" placeholder="اسم السكرتيرة" />
+
+    <label>📞 رقم السكرتيرة</label>
+    <input id="t_secretary_phone" type="number" placeholder="أدخل رقم السكرتيرة" />
+
+    <label>🎓 الصفوف الدراسية</label>
+    <select id="t_grade" multiple size="12">
+      <option value="1prim">الصف الأول الابتدائي</option>
+      <option value="2prim">الصف الثاني الابتدائي</option>
+      <option value="3prim">الصف الثالث الابتدائي</option>
+      <option value="4prim">الصف الرابع الابتدائي</option>
+      <option value="5prim">الصف الخامس الابتدائي</option>
+      <option value="6prim">الصف السادس الابتدائي</option>
+      <option value="1prep">الصف الأول الإعدادي</option>
+      <option value="2prep">الصف الثاني الإعدادي</option>
+      <option value="3prep">الصف الثالث الإعدادي</option>
+      <option value="1sec">الصف الأول الثانوي</option>
+      <option value="2sec">الصف الثاني الثانوي</option>
+      <option value="3sec">الصف الثالث الثانوي</option>
+    </select>
+
+    <label>🖼 رابط صورة المستر</label>
+    <input id="t_photoUrl" placeholder="ضع هنا رابط الصورة (اختياري)" />
+
+    <button id="addTeacherBtn" class="btn-add">➕ إضافة المستر</button>
+
+    <div id="teachersList"></div>
+  </div>
+
+  <!-- 🎯 نافذة التنبيه المخصصة -->
+  <div id="customAlert">
+    <h3>THE GIANT says 💬</h3>
+    <p id="alertMessage"></p>
+    <button onclick="closeAlert()">تمام</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, push, set, get, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+      authDomain: "ylearn-fe1fa.firebaseapp.com",
+      databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+      projectId: "ylearn-fe1fa",
+      storageBucket: "ylearn-fe1fa.appspot.com",
+      messagingSenderId: "1092852055944",
+      appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 🎯 دوال التنبيه
+    window.showAlert = function (msg) {
+      document.getElementById("alertMessage").textContent = msg;
+      document.getElementById("customAlert").style.display = "block";
+    };
+
+    window.closeAlert = function () {
+      document.getElementById("customAlert").style.display = "none";
+    };
+
+    const addTeacherBtn = document.getElementById('addTeacherBtn');
+    const teachersList = document.getElementById('teachersList');
+    const searchInput = document.getElementById('searchInput');
+
+    let allTeachers = {};
+
+    async function loadTeachers() {
+      teachersList.innerHTML = '';
+      const snapshot = await get(ref(db, 'teachers'));
+      if (!snapshot.exists()) {
+        teachersList.innerHTML = '<p class="muted">لا يوجد مدرسين بعد</p>';
+        allTeachers = {};
+        return;
+      }
+      allTeachers = snapshot.val();
+      displayTeachers(allTeachers);
+    }
+
+    function displayTeachers(data) {
+      teachersList.innerHTML = '';
+      Object.entries(data).forEach(([id, teacher]) => {
+        const div = document.createElement('div');
+        div.className = 'teacher';
+        div.innerHTML = `
+          <div class="info">
+            <strong>${teacher.name}</strong>
+            <small>${teacher.grade}</small>
+          </div>
+          <div class="muted">
+            ${teacher.subject || ''}<br>
+            🧑‍💼 ${teacher.secretary || '—'} | 📞 ${teacher.secretaryPhone || '—'}
+          </div>
+          ${teacher.photoUrl ? `<img src="${teacher.photoUrl}" alt="صورة ${teacher.name}" style="width:100%;margin-top:8px;border-radius:10px;max-height:400px;object-fit:cover;">` : ''}
+          <button class="btn-danger" onclick="deleteTeacher('${id}')">🗑 حذف</button>
+        `;
+        teachersList.appendChild(div);
+      });
+    }
+
+    addTeacherBtn.addEventListener('click', async () => {
+      const name = document.getElementById('t_name').value.trim();
+      const subject = document.getElementById('t_subject').value.trim();
+      const secretary = document.getElementById('t_secretary').value.trim();
+      const secretaryPhone = document.getElementById('t_secretary_phone').value.trim();
+      const gradeOptions = Array.from(document.getElementById('t_grade').selectedOptions).map(o => o.value);
+      const photoUrl = document.getElementById('t_photoUrl').value.trim();
+
+      if (!name || !subject || !secretary || !secretaryPhone || gradeOptions.length === 0) {
+        return showAlert('⚠️ يرجى إدخال جميع البيانات المطلوبة واختيار صف واحد على الأقل');
+      }
+
+      for (const grade of gradeOptions) {
+        const newRef = push(ref(db, 'teachers'));
+        await set(newRef, { name, subject, secretary, secretaryPhone, grade, photoUrl });
+      }
+
+      showAlert('✅ تم إضافة المستر في الصفوف المختارة بنجاح');
+      loadTeachers();
+    });
+
+    window.deleteTeacher = async (id) => {
+      if (!confirm('هل أنت متأكد من الحذف؟')) return;
+      await remove(ref(db, 'teachers/' + id));
+      showAlert('تم حذف المستر 🗑');
+      loadTeachers();
+    };
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim().toLowerCase();
+      const filtered = Object.fromEntries(
+        Object.entries(allTeachers).filter(([id, t]) =>
+          t.name && t.name.toLowerCase().includes(query)
+        )
+      );
+      displayTeachers(filtered);
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.location.href = 'admin.html';
+    });
+
+    loadTeachers();
+  </script>
+</body>
+</html>

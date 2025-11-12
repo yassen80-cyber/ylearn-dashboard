@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📘 الواجب - منصة THE GIANT</title>
+<style>
+  body {margin:0;font-family:"Cairo",sans-serif;background:#0b0f19;color:#fff;min-height:100vh;}
+  header {background:#111827;padding:1rem 1.5rem;display:flex;justify-content:center;align-items:center;box-shadow:0 0 10px rgba(0,0,0,0.4);}
+  header h1 {color:#00b2ff;margin:0;font-size:1.2rem;}
+  .exam-container {max-width:950px;margin:auto;padding:1rem;}
+  .exam-title {text-align:center;font-size:1.4rem;color:#00b2ff;margin:1.5rem 0 1.5rem;}
+  .stats-bar {display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
+  .stat-card {padding:1rem;border-radius:12px;text-align:center;font-weight:bold;font-size:0.9rem;box-shadow:0 0 10px rgba(0,0,0,0.3);}
+  .blue{background:#007bff;} .green{background:#28a745;} .red{background:#dc3545;} .yellow{background:#ffc107;color:#000;} .purple{background:#6f42c1;}
+  .question-card{background:#1e2636;padding:1rem;border-radius:10px;margin-bottom:1rem;}
+  .question-card h3{margin-top:0;color:#00b2ff;}
+  .options label{display:block;background:#2a3245;margin:0.5rem 0;padding:0.6rem;border-radius:8px;cursor:pointer;transition:0.3s;}
+  .options label:hover{background:#3a4560;}
+  .submit-btn{background:#00b2ff;border:none;color:white;padding:0.7rem 1.2rem;border-radius:10px;cursor:pointer;font-size:1rem;display:block;width:100%;margin-top:1.2rem;}
+  .submit-btn:hover{opacity:0.9;}
+  .result-card{background:#1e2636;padding:1.5rem;border-radius:10px;margin-top:1.5rem;text-align:center;}
+  .result-card h2{color:#00b2ff;margin-bottom:1rem;}
+  .correct-answer{color:#28a745;font-weight:bold;margin-top:5px;}
+  .wrong-answer{color:#dc3545;font-weight:bold;margin-top:5px;}
+</style>
+</head>
+<body>
+  <header><h1>📘 الواجب</h1></header>
+  <div class="exam-container">
+    <div id="examTitle" class="exam-title">جاري تحميل الواجب...</div>
+    <div class="stats-bar">
+      <div class="stat-card purple">🧩 الأسئلة: <span id="totalQ">0</span></div>
+      <div class="stat-card yellow">📝 المجابة: <span id="answeredQ">0</span></div>
+      <div class="stat-card green">✔️ الصحيحة: <span id="correctQ">0</span></div>
+      <div class="stat-card red">❌ الخاطئة: <span id="wrongQ">0</span></div>
+      <div class="stat-card blue">⏳ الزمن المستغرق: <span id="elapsedTime">0:00</span></div>
+    </div>
+
+    <form id="examForm"></form>
+    <div id="resultSection"></div>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.firebasestorage.app",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 📌 تحديد ID الواجب الحالي
+const urlParams = new URLSearchParams(window.location.search);
+let homeworkId = urlParams.get("homeworkId") || localStorage.getItem("currentHomeworkId");
+if (homeworkId) {
+  localStorage.setItem("currentHomeworkId", homeworkId);
+} else {
+  alert("⚠️ لم يتم تحديد الواجب بشكل صحيح.");
+}
+
+const examTitleEl = document.getElementById("examTitle");
+const examForm = document.getElementById("examForm");
+const resultSection = document.getElementById("resultSection");
+const totalQEl = document.getElementById("totalQ");
+const answeredQEl = document.getElementById("answeredQ");
+const correctQEl = document.getElementById("correctQ");
+const wrongQEl = document.getElementById("wrongQ");
+const elapsedEl = document.getElementById("elapsedTime");
+
+let startTime = Date.now();
+setInterval(() => {
+  const diff = Math.floor((Date.now() - startTime) / 1000);
+  const m = Math.floor(diff / 60);
+  const s = diff % 60;
+  elapsedEl.textContent = `${m}:${s.toString().padStart(2, "0")}`;
+}, 1000);
+
+async function loadHomework() {
+  const uid = localStorage.getItem("uid") || `guest_${Math.floor(Math.random() * 99999)}`;
+  const name = localStorage.getItem("name") && localStorage.getItem("name") !== "null" ? localStorage.getItem("name") : "غير معروف";
+  const phone = localStorage.getItem("phone") && localStorage.getItem("phone") !== "null" ? localStorage.getItem("phone") : "غير مسجل";
+  const parentPhone = localStorage.getItem("parentPhone") && localStorage.getItem("parentPhone") !== "null" ? localStorage.getItem("parentPhone") : "غير مسجل";
+
+  console.log("📋 بيانات الطالب:", { uid, name, phone, parentPhone });
+
+  const snapshot = await get(ref(db, "courses"));
+  if (!snapshot.exists()) {
+    examTitleEl.textContent = "❌ لا يوجد واجبات حالياً.";
+    return;
+  }
+
+  let currentHomework = null;
+  snapshot.forEach(courseSnap => {
+    courseSnap.child("content").forEach(contentSnap => {
+      if (contentSnap.key === homeworkId) {
+        currentHomework = contentSnap.val();
+      }
+    });
+  });
+
+  if (!currentHomework) {
+    examTitleEl.textContent = "❌ لم يتم العثور على هذا الواجب.";
+    return;
+  }
+
+  const resultRef = ref(db, `homeworkResult/${uid}/${homeworkId}`);
+  const resultSnap = await get(resultRef);
+
+  if (resultSnap.exists()) {
+    const r = resultSnap.val();
+    examTitleEl.textContent = `${currentHomework.title} - تم الحل ✅`;
+    examForm.innerHTML = "";
+    resultSection.innerHTML = `
+      <div class="result-card">
+        <h2>🎯 تم حل الواجب مسبقاً</h2>
+        <p>👤 الاسم: ${r.name}</p>
+        <p>📞 الرقم: ${r.phone}</p>
+        <p>📱 رقم ولي الأمر: ${r.parentPhone}</p>
+        <p>✅ صحيحة: ${r.correct}</p>
+        <p>❌ خاطئة: ${r.wrong}</p>
+        <p>النسبة: ${r.percentage}%</p>
+        <p>⏳ الزمن: ${r.timeTakenMin} دقيقة</p>
+        <button class="submit-btn" onclick="window.location.href='dashboard.html'">🏠 الرجوع</button>
+      </div>`;
+    return;
+  }
+
+  examTitleEl.textContent = currentHomework.title;
+  const questions = currentHomework.questions || {};
+  totalQEl.textContent = Object.keys(questions).length;
+  examForm.innerHTML = "";
+
+  Object.entries(questions).forEach(([qid, q]) => {
+    const div = document.createElement("div");
+    div.className = "question-card";
+    div.innerHTML = `
+      <h3>${q.question}</h3>
+      <div class="options">
+        ${Object.values({ opt1: q.opt1, opt2: q.opt2, opt3: q.opt3, opt4: q.opt4 })
+          .filter(Boolean)
+          .map(opt => `<label><input type="radio" name="${qid}" value="${opt}"> ${opt}</label>`).join("")}
+      </div>`;
+    examForm.appendChild(div);
+  });
+
+  const submitBtn = document.createElement("button");
+  submitBtn.className = "submit-btn";
+  submitBtn.type = "button";
+  submitBtn.textContent = "📤 تسليم الواجب";
+  submitBtn.onclick = () => finishHomework(questions, currentHomework.title, name, phone, parentPhone, uid);
+  examForm.appendChild(submitBtn);
+
+  examForm.addEventListener("change", () => {
+    let answered = 0;
+    Object.keys(questions).forEach(id => {
+      if (document.querySelector(`input[name='${id}']:checked`)) answered++;
+    });
+    answeredQEl.textContent = answered;
+  });
+}
+
+async function finishHomework(questions, title, name, phone, parentPhone, uid) {
+  let correct = 0, wrong = 0;
+  Object.entries(questions).forEach(([id, q]) => {
+    const chosen = document.querySelector(`input[name='${id}']:checked`);
+    const card = document.querySelector(`input[name='${id}']`).closest(".question-card");
+    if (chosen && chosen.value === q.correct) {
+      correct++;
+      card.innerHTML += `<div class='correct-answer'>✅ إجابة صحيحة</div>`;
+    } else {
+      wrong++;
+      card.innerHTML += `<div class='wrong-answer'>❌ الإجابة الصحيحة: ${q.correct}</div>`;
+    }
+  });
+
+  correctQEl.textContent = correct;
+  wrongQEl.textContent = wrong;
+  examForm.querySelector(".submit-btn").remove();
+
+  const total = Object.keys(questions).length;
+  const percentage = ((correct / total) * 100).toFixed(1);
+  const timeTakenMin = ((Date.now() - startTime) / 60000).toFixed(1);
+
+  resultSection.innerHTML = `
+    <div class="result-card">
+      <h2>🎯 نتيجتك</h2>
+      <p>👤 الاسم: ${name}</p>
+      <p>📞 الرقم: ${phone}</p>
+      <p>📱 رقم ولي الأمر: ${parentPhone}</p>
+      <p>✅ صحيحة: ${correct}</p>
+      <p>❌ خاطئة: ${wrong}</p>
+      <p>النسبة: ${percentage}%</p>
+      <p>⏳ الزمن المستغرق: ${timeTakenMin} دقيقة</p>
+      <button class="submit-btn" onclick="window.location.href='dashboard.html'">🏠 الرجوع</button>
+    </div>`;
+
+  const data = {
+    uid, name, phone, parentPhone,
+    correct, wrong, total, percentage, timeTakenMin,
+    finishedAt: new Date().toISOString(),
+    title
+  };
+
+  await set(ref(db, `homeworkResult/${uid}/${homeworkId}`), data);
+}
+
+loadHomework();
+</script>
+</body>
+</html>

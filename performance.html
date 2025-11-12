@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 أداء الطالب | THE GIANT</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: "Cairo", sans-serif;
+    background: radial-gradient(circle at top, #0b0f19, #000);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    background: linear-gradient(90deg,#00b2ff,#16a34a);
+    padding: 18px 25px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    border-bottom: 2px solid #1f2937;
+    letter-spacing: 0.5px;
+  }
+  main {
+    max-width: 600px;
+    margin: 40px auto;
+    background: rgba(31,41,55,0.95);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 0 30px rgba(0,255,255,0.1);
+    text-align: center;
+    position: relative;
+  }
+  h2 {
+    color: #22d3ee;
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+  .stat {
+    font-size: 18px;
+    margin: 12px 0;
+    background: #111827;
+    padding: 14px;
+    border-radius: 12px;
+    transition: transform 0.3s;
+  }
+  .stat:hover {
+    transform: scale(1.03);
+  }
+  .progress-bar {
+    height: 22px;
+    background: #374151;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 25px 0;
+  }
+  .progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg,#22d3ee,#3b82f6,#16a34a);
+    width: 0%;
+    transition: width 1.5s ease-in-out;
+  }
+  .message {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #16a34a;
+  }
+  .back-btn {
+    display: block;
+    margin: 30px auto 0;
+    text-decoration: none;
+    background: linear-gradient(45deg,#00b2ff,#16a34a);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 17px;
+    transition: all 0.3s ease;
+    max-width: 200px;
+  }
+  .back-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,255,255,0.2);
+  }
+</style>
+</head>
+<body>
+  <header>📊 أداء الطالب</header>
+  <main>
+    <h2 id="studentName">جارِ التحميل...</h2>
+    <div class="stat" id="examStats">الامتحانات: -</div>
+    <div class="stat" id="homeworkStats">الواجبات: -</div>
+    <div class="stat" id="totalPerformance">نسبة الأداء: -</div>
+    <div class="progress-bar"><div class="progress-bar-inner" id="progress"></div></div>
+    <div class="message" id="message">جارِ الحساب...</div>
+    <a href="dashboard.html" class="back-btn">⬅️ الرجوع للوحة الطالب</a>
+  </main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.appspot.com",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const studentName = document.getElementById("studentName");
+const examStats = document.getElementById("examStats");
+const homeworkStats = document.getElementById("homeworkStats");
+const totalPerformance = document.getElementById("totalPerformance");
+const progress = document.getElementById("progress");
+const message = document.getElementById("message");
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    alert("يُرجى تسجيل الدخول أولاً");
+    window.location.href = "login.html";
+    return;
+  }
+
+  studentName.textContent = `مرحبًا، ${user.displayName || "صديقي الطالب"} 👋`;
+
+  let totalExams = 0, solvedExams = 0;
+  let totalHomeworks = 0, solvedHomeworks = 0;
+
+  const coursesSnap = await get(ref(db, "courses"));
+  if (coursesSnap.exists()) {
+    Object.values(coursesSnap.val()).forEach(course => {
+      if (course.content) {
+        Object.values(course.content).forEach(content => {
+          const type = content.type;
+          if (type === "امتحان") totalExams++;
+          if (type === "واجب") totalHomeworks++;
+        });
+      }
+    });
+  }
+
+  const resultsSnap = await get(ref(db, `results/${user.uid}`));
+  if (resultsSnap.exists()) solvedExams = Object.keys(resultsSnap.val()).length;
+
+  const homeworkSnap = await get(ref(db, `homeworkResult/${user.uid}`));
+  if (homeworkSnap.exists()) solvedHomeworks = Object.keys(homeworkSnap.val()).length;
+
+  const totalItems = totalExams + totalHomeworks;
+  const totalSolved = solvedExams + solvedHomeworks;
+  const percent = totalItems > 0 ? Math.round((totalSolved / totalItems) * 100) : 0;
+
+  examStats.textContent = `📘 الامتحانات المحلولة: ${solvedExams} من ${totalExams}`;
+  homeworkStats.textContent = `📝 الواجبات المحلولة: ${solvedHomeworks} من ${totalHomeworks}`;
+  totalPerformance.textContent = `🌟 نسبة الأداء الكلية: ${percent}%`;
+  progress.style.width = percent + "%";
+
+  if (percent === 100) {
+    message.textContent = "🎉 ممتاز! أنت أتممت كل شيء بنجاح، استمر يا بطل 💪";
+    message.style.color = "#00ff9d";
+  } else if (percent >= 70) {
+    message.textContent = "🔥 أداء رائع جدًا! كمل الباقي يا صديقي 👏";
+    message.style.color = "#22d3ee";
+  } else if (percent > 0) {
+    message.textContent = "💪 بداية ممتازة! استمر لتصل للـ100% 🚀";
+    message.style.color = "#facc15";
+  } else {
+    message.textContent = "😴 لسه ما بدأتش، يلا نبدأ أول خطوة نحو النجاح!";
+    message.style.color = "#f87171";
+  }
+});
+</script>
+</body>
+</html>
