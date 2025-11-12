@@ -1,0 +1,473 @@
+<!doctype html>
+
+<html lang="ar" dir="rtl">          
+<head>          
+  <meta charset="utf-8" />          
+  <meta name="viewport" content="width=device-width,initial-scale=1" />          
+  <title>🎓 لوحة الطالب - THE GIANT</title>          
+  <style>          
+    :root {          
+      --bg:#0b0f19; --card:#111827; --accent:#00b2ff;          
+      --muted:#cbd5e1; --ok:#00b258; --danger:#e63946;          
+    }          
+    body {          
+      margin:0; font-family:"Cairo",sans-serif;          
+      background:var(--bg); color:#fff; padding:16px;          
+    }          
+    header {          
+      display:flex; justify-content:space-between; align-items:center;          
+      background:var(--card); padding:12px; border-radius:10px;          
+      flex-wrap:wrap; gap:8px;          
+    }          
+    header h1 { margin:0; color:var(--accent); font-size:1.2rem; }          
+    .main { max-width:1000px; margin:18px auto; }          
+    .banner {          
+      background:linear-gradient(45deg,#00b2ff,#16a34a);          
+      padding:12px; border-radius:10px; font-weight:700; font-size:1rem;          
+    }          
+    .select-box {          
+      background:#1e2636; padding:12px; border-radius:10px; margin-top:12px;          
+    }          
+    select {          
+      width:100%; padding:10px; border-radius:8px; border:0;          
+      background:#0b0f19; color:#fff; font-size:1rem;          
+    }          
+    .course-grid {          
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));          
+      gap:12px; margin-top:14px;          
+    }          
+    .course-card {          
+      background:#1e2636; padding:12px; border-radius:10px; text-align:right;          
+    }          
+    .course-card h3 { color:var(--accent); margin:0; font-size:1.1rem; }          
+    .course-card p { color:var(--muted); margin:8px 0; font-size:0.95rem; }          
+    .btn {          
+      border:0; padding:10px; border-radius:8px; width:100%;          
+      cursor:pointer; font-weight:600; font-size:0.95rem;          
+    }          
+    .buy-btn { background:linear-gradient(45deg,#00b2ff,#06b6d4); color:#000; }          
+    .view-btn { background:#16a34a; color:#fff; }          
+    .modal {          
+      position:fixed; inset:0; background:rgba(0,0,0,0.6);          
+      display:none; align-items:center; justify-content:center;          
+      padding:16px; z-index:50;          
+    }          
+    .modal .box {          
+      background:var(--card); border-radius:12px; padding:16px;          
+      width:100%; max-width:520px;          
+    }          
+    .field { margin:8px 0; }          
+    label { display:block; margin-bottom:6px; color:var(--muted); font-size:0.9rem; }          
+    input[type="text"], textarea {          
+      width:100%; padding:10px; border-radius:8px; border:0;          
+      background:#0b1220; color:#fff; font-size:1rem;          
+    }          
+    .small { font-size:0.9rem; color:var(--muted); }          
+    .ok { color:var(--ok); }          
+    .danger { color:var(--danger); }          
+    .row { display:flex; flex-wrap:wrap; gap:8px; }          
+    .row .btn { flex:1 1 48%; }          
+    .hidden { display:none; }          
+@media (max-width:600px) {          
+  body { padding:8px; }          
+  header h1 { font-size:1rem; }          
+  .banner { font-size:0.9rem; }          
+  .btn { font-size:0.9rem; padding:8px; }          
+  .modal .box { max-width:95%; padding:12px; }          
+  .row .btn { flex:1 1 100%; }          
+}        
+  </style>          
+</head>          
+<body>          
+<header>          
+  <h1>🎓 لوحة الطالب - THE GIANT</h1>          
+  <button id="logoutBtn" class="btn" style="background:linear-gradient(45deg,#ef4444,#b91c1c);color:#fff;">🔒 تسجيل الخروج</button>          
+</header>          
+<div class="main">          
+  <div class="banner" id="bannerText">مرحبًا بك! اختر المدرس وابدأ رحلتك 🚀</div>          
+
+  <!-- ✅ زر صفحة الأداء -->
+  <a href="performance.html" style="
+    display:block;
+    background:linear-gradient(45deg,#00b2ff,#16a34a);
+    color:#fff;
+    text-align:center;
+    margin:15px auto;
+    padding:12px 20px;
+    border-radius:12px;
+    text-decoration:none;
+    font-weight:600;
+    max-width:220px;
+  ">📊 أداؤك هنا يا صديقي</a>
+
+  <div class="select-box">          
+    <label>اختر المدرس:</label>          
+    <select id="teacherSelect"><option value="">-- اختر المدرس --</option></select>          
+  </div>          
+  <div id="coursesContainer" class="course-grid"></div>          
+</div>   <!-- مودال الشراء -->  <div id="buyModal" class="modal">          
+  <div class="box">          
+    <h3 id="modalCourseTitle">تفاصيل الشراء</h3>          
+    <div class="note">          
+      <p class="small">اذا كنت تريد شراء الكورس اضغط علي ارسال طلب الشراء  حتي تستطيع من دخول الكورس اكمل عملية الدفع وأرسل صورة الدفع للرقم 01289050156</p>          
+    </div>          
+    <div id="paymentInfoArea">          
+      <p><strong>السعر:</strong> <span id="modalPrice">0</span> جنيه</p>          
+      <div class="field">          
+        <label>طرق الدفع</label>          
+        <p class="muted">محفظة اورنج كاش:<strong>[01289050156]</strong></p>          
+      </div>          
+      <div class="field">          
+        <label>تعليمات قصيرة</label>          
+        <textarea id="paymentInstructions" rows="3">حول المبلغ ثم أرسل سكرين شوت التحويل إلى الرقم (01289050156).بعد التأكد ستحصل علي الكود من نفس الرقم </textarea>          
+      </div>          
+      <div class="field">          
+        <label>إرسال طلب الشراء:</label>          
+        <div class="row">          
+          <button id="sendRequestBtn" class="btn buy-btn">📩 أرسل طلب الشراء</button>          
+          <button id="openCodeInputBtn" class="btn" style="background:#374151;color:#fff;">🔑 أدخل كود التفعيل</button>          
+        </div>          
+        <p id="sendResult" class="small"></p>          
+      </div>          
+      <div id="codeArea" class="field hidden">          
+        <label>أدخل كود التفعيل:</label>          
+        <input type="text" id="activationCodeInput" placeholder="أدخل الكود هنا" />          
+        <div class="row" style="margin-top:8px;">          
+          <button id="applyCodeBtn" class="btn view-btn">تفعيل الكود ✅</button>          
+          <button id="closeModalBtn" class="btn" style="background:#374151;color:#fff;">إغلاق</button>          
+        </div>          
+        <p id="applyResult" class="small"></p>          
+      </div>          
+      <div class="field" style="margin-top:16px;text-align:center;">          
+        <button id="backToCoursesBtn" class="btn" style="background:#4b5563;color:#fff;">⬅️ رجوع</button>          
+      </div>          
+    </div>          
+  </div>          
+</div>    <div id="toast" style="position:fixed;left:16px;bottom:16px;background:#111;padding:10px;border-radius:8px;display:none;"></div>    <script type="module">        
+// نفس الفايربيس والإعدادات كما هي بدون أي تعديل        
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";          
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";          
+import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {    
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",    
+  authDomain: "ylearn-fe1fa.firebaseapp.com",    
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",    
+  projectId: "ylearn-fe1fa",    
+  storageBucket: "ylearn-fe1fa.appspot.com",    
+  messagingSenderId: "1092852055944",    
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"    
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const teacherSelect = document.getElementById('teacherSelect');
+const coursesContainer = document.getElementById('coursesContainer');
+const banner = document.getElementById('bannerText');
+const logoutBtn = document.getElementById('logoutBtn');
+const buyModal = document.getElementById('buyModal');
+const modalCourseTitle = document.getElementById('modalCourseTitle');
+const modalPrice = document.getElementById('modalPrice');
+const sendRequestBtn = document.getElementById('sendRequestBtn');
+const sendResult = document.getElementById('sendResult');
+const openCodeInputBtn = document.getElementById('openCodeInputBtn');
+const codeArea = document.getElementById('codeArea');
+const activationCodeInput = document.getElementById('activationCodeInput');
+const applyCodeBtn = document.getElementById('applyCodeBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const applyResult = document.getElementById('applyResult');
+const backToCoursesBtn = document.getElementById('backToCoursesBtn');
+const toast = document.getElementById('toast');
+
+let currentCourse = null;
+let currentUid = null;
+let studentGrade = null; // ✅ لتخزين صف الطالب
+
+logoutBtn.onclick = async () => {
+  await signOut(auth);
+  window.location.href = 'login.html';
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return (window.location.href = 'login.html');
+  currentUid = user.uid;
+
+  const sSnap = await get(ref(db, `students/${currentUid}`));
+  const sData = sSnap.exists() ? sSnap.val() : {};
+  studentGrade = sData.grade || null; // ✅ حفظ الصف الدراسي للطالب
+  banner.textContent = `مرحبًا ${sData.name || 'طالبنا العزيز'}! اختر المدرس وابدأ رحلتك 🚀`;
+
+  const teachersSnap = await get(ref(db, 'teachers'));
+  teacherSelect.innerHTML = '<option value="">-- اختر المدرس --</option>';
+  if (teachersSnap.exists()) {
+    Object.entries(teachersSnap.val()).forEach(([id, t]) => {
+      // ✅ فلترة حسب الصف الدراسي
+      if (!studentGrade || t.grade === studentGrade) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = t.name || 'مدرس';
+        teacherSelect.appendChild(opt);
+      }
+    });
+  }
+
+  const coursesSnap = await get(ref(db, 'courses'));
+  const allCourses = coursesSnap.exists() ? coursesSnap.val() : {};
+
+  teacherSelect.addEventListener('change', async () => {
+    const teacherId = teacherSelect.value;
+    coursesContainer.innerHTML = '';
+    if (!teacherId) return;
+
+    const teacherSnap = await get(ref(db, `teachers/${teacherId}`));
+    if (teacherSnap.exists()) {
+      const t = teacherSnap.val();
+      const info = document.createElement('div');
+      info.className = 'course-card';
+
+      // ✅ لو في صورة في قاعدة البيانات نعرضها فوق الاسم
+      let imgHtml = '';
+      // try common field names: photoUrl or photo
+      if (t.photoUrl) {
+        imgHtml = `<img src="${t.photoUrl}" alt="صورة ${t.name}" style="width:100%;border-radius:10px;margin-bottom:10px;max-height:220px;object-fit:cover;">`;
+      } else if (t.photo) {
+        imgHtml = `<img src="${t.photo}" alt="صورة ${t.name}" style="width:100%;border-radius:10px;margin-bottom:10px;max-height:220px;object-fit:cover;">`;
+      }
+
+      info.innerHTML = `
+        ${imgHtml}
+        <h3>👨‍🏫 ${t.name || 'مدرس'}</h3>
+        <p>📘 المادة: ${t.subject || 'غير محددة'}</p>
+        <p>🎓 المرحلة: ${t.grade || 'غير محددة'}</p>
+        <p>🧕 السكرتيرة: ${t.secretary || 'غير متوفرة'}</p>
+        <p>📞 رقم السكرتيرة: ${t.secretaryPhone || 'غير متوفر'}</p>
+      `;
+      coursesContainer.appendChild(info);
+    }
+
+    const purchasedSnap = await get(ref(db, `students/${currentUid}/purchased`));
+    const purchased = purchasedSnap.exists() ? purchasedSnap.val() : {};
+
+    Object.entries(allCourses).forEach(async ([courseId, c]) => {
+  if (c.teacherId !== teacherId) return;
+  const card = document.createElement('div');
+  card.className = 'course-card';
+  const isPurchased = purchased && purchased[courseId] === true;
+
+  // ✅ حساب عدد المشترين للكورس
+  const studentsSnap = await get(ref(db, 'students'));
+  let buyersCount = 0;
+  if (studentsSnap.exists()) {
+    Object.values(studentsSnap.val()).forEach(s => {
+      if (s.purchased && s.purchased[courseId]) buyersCount++;
+    });
+  }
+
+  // ✅ إنشاء عنصر لعرض عدد المشترين أعلى الكارت
+  const buyersBadge = document.createElement('div');
+  buyersBadge.textContent = `عدد مشتري هذا الكورس${buyersCount} 👥`;
+  buyersBadge.style.position = 'absolute';
+  buyersBadge.style.top = '8px';
+  buyersBadge.style.left = '8px';
+  buyersBadge.style.background = '#00b2ff';
+  buyersBadge.style.color = '#000';
+  buyersBadge.style.padding = '4px 8px';
+  buyersBadge.style.borderRadius = '6px';
+  buyersBadge.style.fontWeight = '700';
+  buyersBadge.style.fontSize = '0.9rem';
+  card.style.position = 'relative';
+  card.appendChild(buyersBadge);
+
+  const h3 = document.createElement('h3');
+  h3.textContent = c.name || '';
+  card.appendChild(h3);
+
+      // ✅ صورة المدرس تحت اسم الكورس (نستخدم teacherSnap الموجود فوق)
+      try {
+        if (teacherSnap && teacherSnap.exists()) {
+          const teacherData = teacherSnap.val();
+          const teacherPhoto = teacherData.photoUrl || teacherData.photo || null;
+          if (teacherPhoto) {
+            const img = document.createElement('img');
+            img.src = teacherPhoto;
+            img.alt = 'صورة المدرس';
+            img.style.width = '100%';
+            img.style.borderRadius = '10px';
+            img.style.margin = '10px 0';
+            img.style.maxHeight = '180px';
+            img.style.objectFit = 'cover';
+            card.appendChild(img);
+          }
+        }
+      } catch (e) {
+        // لا توقف التنفيذ لو حصل خطأ بسيط
+        console.warn('error showing teacher photo under course', e);
+      }
+
+      const pDesc = document.createElement('p');
+      pDesc.textContent = c.description || 'لا يوجد وصف';
+      card.appendChild(pDesc);
+
+      const pPrice = document.createElement('p');
+      pPrice.textContent = '💰 السعر: ';
+      const strong = document.createElement('strong');
+      strong.textContent = c.price;
+      pPrice.appendChild(strong);
+      pPrice.appendChild(document.createTextNode(' جنيه'));
+      card.appendChild(pPrice);
+
+      const btn = document.createElement('button');
+      btn.id = `btn-${courseId}`;
+      btn.className = 'btn ' + (isPurchased ? 'view-btn' : 'buy-btn');
+      btn.textContent = isPurchased ? '✅ عرض الكورس' : '🛒 اشترِ الكورس';
+      card.appendChild(btn);
+
+      coursesContainer.appendChild(card);
+
+      if (isPurchased) {
+        btn.onclick = () => {
+          window.location.href = `courseContent.html?courseId=${courseId}`;
+        };
+      } else {
+        btn.onclick = () => openBuyModal({ courseId, courseName: c.name, price: c.price });
+      }
+    });
+  });
+});
+
+function openBuyModal({ courseId, courseName, price }) {
+  currentCourse = { courseId, courseName, price };
+  modalCourseTitle.textContent = `شراء: ${courseName}`;
+  modalPrice.textContent = price;
+  sendResult.textContent = '';
+  applyResult.textContent = '';
+  activationCodeInput.value = '';
+  codeArea.classList.add('hidden');
+  buyModal.style.display = 'flex';
+}
+
+closeModalBtn.onclick = () => (buyModal.style.display = 'none');
+backToCoursesBtn.onclick = () => (buyModal.style.display = 'none');
+
+sendRequestBtn.onclick = async () => {
+  if (!currentCourse) return;
+  try {
+    const sSnap = await get(ref(db, `students/${currentUid}`));
+    const sData = sSnap.exists() ? sSnap.val() : {};
+    const reqPath = `unlockRequests/${currentUid}_${currentCourse.courseId}`;
+    const payload = {
+      studentId: currentUid,
+      studentName: sData.name || 'غير معروف',
+      courseName: currentCourse.courseName,
+      courseId: currentCourse.courseId,
+      price: currentCourse.price || 0,
+      status: 'pending',
+      timestamp: new Date().toISOString()
+    };
+    await set(ref(db, reqPath), payload);
+    sendResult.textContent = '✅ تم إرسال الطلب، أدخل الكود يدويًا عند توليده.';
+    sendResult.className = 'small ok';
+  } catch (err) {
+    console.error(err);
+    sendResult.textContent = 'حدث خطأ أثناء إرسال الطلب.';
+    sendResult.className = 'small danger';
+  }
+};
+
+openCodeInputBtn.onclick = () => codeArea.classList.remove('hidden');
+
+applyCodeBtn.onclick = async () => {
+  const code = activationCodeInput.value.trim();
+  if (!code) {
+    applyResult.textContent = 'أدخل الكود أولاً.';
+    applyResult.className = 'small danger';
+    return;
+  }
+
+  try {
+    const codePath = `activationCodes/${currentUid}_${currentCourse.courseId}`;
+    const codeSnap = await get(ref(db, codePath));
+
+    if (!codeSnap.exists()) {
+      applyResult.textContent = '❌ لا يوجد كود مخصص لك في هذا الكورس.';
+      applyResult.className = 'small danger';
+      return;
+    }
+
+    const codeData = codeSnap.val();
+
+    if (codeData.code !== code) {
+      applyResult.textContent = '❌ الكود غير صحيح.';
+      applyResult.className = 'small danger';
+      return;
+    }
+
+    await set(ref(db, `students/${currentUid}/purchased/${currentCourse.courseId}`), true);
+    await update(ref(db, codePath), {
+      used: true,
+      assignedTo: currentUid,
+      usedAt: new Date().toISOString(),
+      status: 'used'
+    });
+
+    applyResult.textContent = '✅ تم التفعيل بنجاح!';
+    applyResult.className = 'small ok';
+    setTimeout(() => (buyModal.style.display = 'none'), 1200);
+  } catch (error) {
+    console.error(error);
+    applyResult.textContent = 'حدث خطأ أثناء التفعيل.';
+    applyResult.className = 'small danger';
+  }
+};
+
+// ✅ تحميل المدرسين بنفس صف الطالب فقط (من users)
+async function loadTeachersForSameGrade() {
+  try {
+    const studentRef = ref(db, `users/${currentUid}`);
+    const studentSnap = await get(studentRef);
+    if (!studentSnap.exists()) return;
+
+    const studentGrade = studentSnap.val().grade; // ⬅️ من users مش students
+    const teachersRef = ref(db, 'teachers');
+    const teachersSnap = await get(teachersRef);
+
+    teacherSelect.innerHTML = '<option value="">-- اختر المدرس --</option>';
+
+    if (teachersSnap.exists()) {
+      Object.entries(teachersSnap.val()).forEach(([teacherId, teacher]) => {
+        // فلترة حسب الصف الدراسي
+        if (teacher.grade && teacher.grade === studentGrade) {
+          const option = document.createElement('option');
+          option.value = teacherId;
+          option.textContent = teacher.name || 'مدرس';
+          teacherSelect.appendChild(option);
+        }
+      });
+    } else {
+      console.warn('No teachers found.');
+    }
+
+  } catch (err) {
+    console.error('Error loading teachers:', err);
+  }
+}
+
+// ✅ بعد تسجيل الدخول
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUid = user.uid;
+    await loadTeachersForSameGrade();
+  }
+});
+
+function showToast(txt, t = 3000) {
+  toast.textContent = txt;
+  toast.style.display = 'block';
+  setTimeout(() => (toast.style.display = 'none'), t);
+}
+</script>
+
+  </body>        
+</html>
