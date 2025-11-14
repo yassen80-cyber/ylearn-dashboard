@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://yassen80-cyber.github.io/THE_GIANT/sitemap.xml
